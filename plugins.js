@@ -190,7 +190,15 @@ var plugins = [
     slug: 'ifttt',
     async: false,
     modes: ['realtime']
-  }
+  },
+  {
+   name: 'RabbitMq',
+   description: 'Sends recommendations to rabbitmq.',
+   slug: 'rabbitmq',
+   async: true,
+   silent: false,
+   modes: ['realtime','backtest']
+ }
 ];
 
 module.exports = plugins;
