@@ -26,6 +26,13 @@ var RabbitMQ = function(done) {
 RabbitMQ.prototype.processCandle = function(candle, done) {
     this.price = candle.close;
     this.marketTime = candle.start;
+
+    // add extra information
+    candle.starttm = candle.start.unix() //we need unix-ts as number
+    candle.currency = watchConfig.currency;
+    candle.asset = watchConfig.asset;
+    candle.exchange = watchConfig.exchange;
+    sendToQueue(candle, "QUOTE", this.channel, false, true)
     done();
 };
 
@@ -63,13 +70,13 @@ async function createChannel(connectionStr = 'amqp://localhost'){
   return [channel,connection];
 }
 
-async function sendToQueue(advice, queuename, channel, type = 'direct'){
+async function sendToQueue(advice, queuename, channel, persistent = true, exclusive = false){
   await channel.assertQueue(queuename, {durable: true}); //specific queue
 
   return new Promise( (resolve, reject) => {
       const json = JSON.stringify(advice);
-      log.info("sending advice ..."+json);
-      channel.sendToQueue(queuename, new Buffer(json), {persistent: true});
+      log.info("sending object ..."+json);
+      channel.sendToQueue(queuename, new Buffer(json), {persistent: persistent, exclusive : exclusive});
       resolve(true);
   });
 }
