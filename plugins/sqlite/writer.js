@@ -1,5 +1,4 @@
 var _ = require('lodash');
-var config = require('../../core/util.js').getConfig();
 
 var sqlite = require('./handle');
 var util = require('../../core/util');
@@ -10,13 +9,22 @@ var Store = function(done, pluginMeta) {
   this.done = done;
 
   this.watch = pluginMeta.config.watch;
+  this.config = pluginMeta.config;
 
   this.db = sqlite.initDB(false);
   this.db.serialize(this.upsertTables);
 
   this.cache = [];
-  this.buffered = util.gekkoMode() === "importer";
+  this.buffered = util.gekkoMode() === "importer" || this.watch.usecryptocompare;
 
+  if (this.config.watch.tickrate)
+      var TICKRATE = this.config.watch.tickrate;
+    else if(this.config.watch.exchange === 'okcoin')
+      var TICKRATE = 2;
+    else
+      var TICKRATE = 20;
+
+  this.tickrate = TICKRATE;
 }
 
 Store.prototype.table = function(name){
@@ -54,7 +62,12 @@ Store.prototype.upsertTables = function() {
   }, this);
 }
 
+let synchronize = false; // for synchronizing if setTimeout also wants to write
 Store.prototype.writeCandles = function() {
+  if (synchronize)
+    return;
+  synchronize = true;
+
   if(_.isEmpty(this.cache))
     return;
 
@@ -86,34 +99,45 @@ Store.prototype.writeCandles = function() {
     });
 
     stmt.finalize();
-    log.debug('cache: '+ this.cache.length+ ' write candles for '+this.table('candles'));
-    //log.debug(JSON.stringify(this.cache));
 
     this.db.run("COMMIT");
 
     this.cache = [];
   }
+  log.debug('write candles cache size: ' +this.cache.length +' for '+this.table('candles') +' '+ this.cache[0].start.format('YYYY-MM-DD HH:mm:ss'));
 
   this.db.serialize(_.bind(transaction, this));
+  synchronize = false;
 }
 
-var processCandle = function(candle, done) {
+Store.prototype.processCandle = function(candle, done) {
+  if (!this.config.candleWriter.enabled)
+    return;
+
+  // log.debug('got candle for '+this.table('candles') + ' '+ candle.asset + ' '+ candle.start.format('YYYY-MM-DD HH:mm:ss'));
+  // cache candles for 15sec
+  let writeOverTimeout = false;
+  if(_.isEmpty(this.cache) && this.watch.usecryptocompare){
+    //console.log('start timer: '+new Date())
+    setTimeout(()=> {      this.writeCandles();    }, this.tickrate)
+  }
   this.cache.push(candle);
-  if (!this.buffered || this.cache.length > 1000)
+
+  if (!this.buffered || this.cache.length > 1000){
+    //console.log('start timer: '+this.startcachets + ' now: '+now)
     this.writeCandles();
+  }
 
   done();
 };
 
-var finalize = function(done) {
+Store.prototype.finalize= function(done) {
+  if (!this.config.candleWriter.enabled)
+    return;
+
   this.writeCandles();
   this.db.close(() => { done(); });
   this.db = null;
-}
-
-if(config.candleWriter.enabled) {
-  Store.prototype.processCandle = processCandle;
-  Store.prototype.finalize = finalize;
 }
 
 // TODO: add storing of trades / advice?

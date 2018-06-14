@@ -1,6 +1,8 @@
 const io = require('socket.io-client');
 const CCC = require('./ccc-streamer-utilities');
 const ipc = require ('node-ipc');
+const moment = require('moment');
+const log = require('../core/log');
 
 const streamUrl = "https://streamer.cryptocompare.com/";
 
@@ -19,7 +21,7 @@ function getCcSubsriptions(){
     fetch(dataUrl)
     .then(response => resolve(response.json()))
     .catch((error) => {
-      console.log('Cryptocompare API not available.');
+      log.error('Cryptocompare API not available.');
       reject(`Cryptocompare API not available.Error: ${error}`);
     });
   });
@@ -27,10 +29,8 @@ function getCcSubsriptions(){
 
 function subscribeToAllExchanges(){
   getCcSubsriptions().then((data) => {
-    //console.log(data);
   	currentSubs = data['USD']['TRADES'];
-  	console.log(currentSubs);
-
+  	log.info(currentSubs);
   });
 }
 
@@ -61,22 +61,21 @@ capabilities : {
   tradable: true
 };
 */
-function listenToWebsocket(capabilities){
+function listenToWebsocket(capabilities, currency, assets){
   let socket = io(streamUrl, { transports: ['websocket']});
   socket.on('connect', function(){
     var subs = [];
-    console.log("we are connected");
-    createServer('cryptocompare', 'myipcserver').then(()=> {
+    log.info("we are connected");
+    createServer('cryptocompare', '/tmp/cc.cryptocompareserver').then(()=> {
 
     // get all tradeable pairs for exchange, not works! better match assets to currencies
-    // for (let market of capabilities.markets){
-    //  subs.push(subscribeToTrades(market.pair[0], market.pair[1], 'Kraken'));
-    // }
-    for (let asset of capabilities.assets){
-      for (let currency of capabilities.currencies){
-        if (asset !== 'XDG') { // kein Dodge coin for now, cc find no trades!
+    for (let asset of assets){ //capabilities.
+      let market = capabilities.markets.find((market) => {
+        return market.pair[0] === currency && market.pair[1] === asset
+      });
+
+      if (market && asset !== 'XDG') { // kein Dodge coin for now, cc find no trades!
           subs.push(subscribeToTrades(0,asset, currency, 'Kraken'));
-        }
       }
     }
     //subs.push(subscribeToTrades(0,'ETH', 'EUR', 'Kraken'));
@@ -97,7 +96,8 @@ function listenToWebsocket(capabilities){
 
       if (newTrade && newTrade.price){
         const key = newTrade.asset + newTrade.currency+  newTrade.exchange;
-        //console.log("set map: " + key.toUpperCase());
+        const ts = moment.unix(newTrade.timestamp)
+        log.debug("cc got " + newTrade.asset + ' ' + newTrade.currency+ ' '+ newTrade.exchange + ' '+ ts.utc().format());
         pairMap.set(key.toUpperCase(), newTrade);
         broadcast(newTrade);
       }
@@ -106,7 +106,7 @@ function listenToWebsocket(capabilities){
   })
 
   socket.on('error', (error) => {
-    console.log(error);
+    log.error(error);
   });
 
   return promise;
@@ -130,6 +130,7 @@ function transformTradeData(data) {
 		exchange: incomingTrade['M'],
 		type: incomingTrade['T'],
 		id: incomingTrade['ID'],
+		timestamp: incomingTrade['TS'],
 		//Price: CCC.convertValueToDisplay(cointsym, incomingTrade['P']),
 		price: incomingTrade['P'],
 		quantity: incomingTrade['Q'],
@@ -154,18 +155,19 @@ function transformCurrentData(data) {
   let fsym = incomingTrade['FROMSYMBOL'];
   let tsym = incomingTrade['TOSYMBOL'];
 
-	var newTrade = {
+	var newCurrent = {
     asset: fsym,
     currency: tsym,
 		exchange: incomingTrade['MARKET'],
 		type: incomingTrade['FLAGS'],
 		id: incomingTrade['LASTTRADEID'],
+    timestamp: ((new Date().getTime())/1000), //or better utc?
 		price: incomingTrade['PRICE'],
 		quantity: incomingTrade['LASTVOLUME'],
 		total: incomingTrade['LASTVOLUME']
 	};
 
-  return newTrade;
+  return newCurrent;
 };
 
 

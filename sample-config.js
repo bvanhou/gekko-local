@@ -395,7 +395,7 @@ config.rabbitmq = {
 
 config.nodeipc = {
   enabled: true,
-  serverpath: 'myipcserver',
+  serverpath: '/tmp/tradingbot.myipcserver',
   connectionid: 'tradingbot',
   enableProcessCandle: true,
   enableProcessAdvice: true

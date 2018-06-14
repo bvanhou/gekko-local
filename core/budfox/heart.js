@@ -6,15 +6,18 @@ var log = require(util.dirs().core + 'log');
 var _ = require('lodash');
 var moment = require('moment');
 
-if (util.getConfig().watch.tickrate)
-  var TICKRATE = util.getConfig().watch.tickrate;
-else if(util.getConfig().watch.exchange === 'okcoin')
-  var TICKRATE = 2;
-else
-  var TICKRATE = 20;
-
-var Heart = function() {
+var Heart = function(config) {
   this.lastTick = false;
+  this.config = config;
+
+  if (this.config.watch.tickrate)
+      var TICKRATE = this.config.watch.tickrate;
+    else if(this.config.watch.exchange === 'okcoin')
+      var TICKRATE = 2;
+    else
+      var TICKRATE = 20;
+
+  this.tickrate = TICKRATE;
 
   _.bindAll(this);
 }
@@ -30,7 +33,7 @@ Heart.prototype.tick = function() {
   if(this.lastTick) {
     // make sure the last tick happened not to lang ago
     // @link https://github.com/askmike/gekko/issues/514
-    if(this.lastTick < moment().unix() - TICKRATE * 3)
+    if(this.lastTick < moment().unix() - this.tickrate * 3)
       util.die('Failed to tick in time, see https://github.com/askmike/gekko/issues/514 for details', true);
   }
 
@@ -41,7 +44,7 @@ Heart.prototype.tick = function() {
 Heart.prototype.scheduleTicks = function() {
   setInterval(
     this.tick,
-    +moment.duration(TICKRATE, 's')
+    +moment.duration(this.tickrate, 's')
   );
 
   // start!

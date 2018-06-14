@@ -24,6 +24,11 @@ method.init = function() {
   this.addIndicator('tsi', 'TSI', this.settings);
 }
 
+//TODO bug , need to know, without this method, update method of other strategy will be called
+method.update = function(candle) {
+
+}
+
 // for debugging purposes log the last
 // calculated parameters.
 method.log = function(candle) {

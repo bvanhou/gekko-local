@@ -9,17 +9,18 @@ const util = require('./core/util');
 const base = require('./sample-config');
 const cryptocompare = require('./cryptocompare/cc');
 
-let strategies = ['CCI', 'DEMA', 'MACD', 'PPO', 'RSI', 'StochRSI', 'TMA', 'TSI', 'UO', 'varPPO']
-let strategiesMin = ['StochRSI', 'TMA', 'TSI']
-//const watchMarket = {"exchange":"poloniex","currency":"USDT","asset":"BTC"};
+//let strategiesMin = ['CCI', 'DEMA', 'MACD', 'PPO', 'RSI', 'StochRSI', 'TMA', 'TSI', 'UO', 'varPPO']
+let strategiesMin = ['MACD', 'PPO', 'StochRSI', 'TMA', 'TSI']
 
 // get all assets!
 var Trader = require(util.dirs().exchanges + 'kraken');
 capabilities = Trader.getCapabilities();
 
-cryptocompare.listenToWebsocket(capabilities).then(()=> {
+let assets = ['ETH', 'XBT', 'XRP']; //for Kraken is XBT!
+//assets = capabilities.assets;
+cryptocompare.listenToWebsocket(capabilities, 'EUR', assets).then(()=> {
 
-  for (let asset of  capabilities.assets){ // ['ETH'] ){
+  for (let asset of assets) { // ['ETH'] ){ capabilities.assets
     for (let currency of  ['EUR']){ //) { //capabilities.currencies
       let market = _.find(capabilities.markets, (market) => {
         return market.pair[0] === currency && market.pair[1] === asset
@@ -33,10 +34,11 @@ cryptocompare.listenToWebsocket(capabilities).then(()=> {
         "rabbitmq":{"enabled": false},
         "paperTrader":{"enabled":false},
         "performanceAnalyzer":{"enabled":false},
-        "nodeipc":{"enabled": false, "enableProcessCandle": true, "enableProcessAdvice": false}, // we dont need nodeipc for sending quota here!
+        "nodeipc":{"enabled": false, "enableProcessAdvice": false}, // we dont need nodeipc for sending quota here!
         "mode":"realtime"}
 
-         startGekko(myconfig);
+        console.log("start watch gekko for "+asset+' '+currency)
+        startGekko(myconfig);
       }
    }
  }
@@ -44,7 +46,7 @@ cryptocompare.listenToWebsocket(capabilities).then(()=> {
 
 function startStrategies(){
   for (let strategy of strategiesMin){
-    for (let asset of capabilities.assets ){ //
+    for (let asset of assets ){ // capabilities.assets
       for (let currency of ['EUR'] ){ //capabilities.currencies
         let market = _.find(capabilities.markets, (market) => {
           return market.pair[0] === currency && market.pair[1] === asset
@@ -55,7 +57,6 @@ function startStrategies(){
         }
       }
     }
-    //startStrategy(strategy, {exchange: 'kraken',   currency: 'EUR', asset: 'ETH'});
   }
 }
 
@@ -66,7 +67,7 @@ function startStrategy(strategy, watchMarket){
                 "market":{"type":"leech"},
                 "mode":"realtime",
                 "rabbitmq":{"enabled": false},
-                "nodeipc":{"enabled": true, "enableProcessCandle": false, "enableProcessAdvice": true},
+                "nodeipc":{"enabled": true, "enableProcessAdvice": true},
                 "candleWriter":{"enabled":false,"adapter":"sqlite"},
                 "paperTrader":{"enabled":false},
                 "performanceAnalyzer":{"enabled":false},

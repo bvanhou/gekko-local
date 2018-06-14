@@ -28,14 +28,13 @@ var CcCache = function(config) {
     return market.pair[0] === this.currency && market.pair[1] === this.asset
   });
 
-  console.log('asset: '+this.asset + " "+this.currency)
   this.pair = this.market.book;
 
   //if a map from cc is empty, we are probably in child process. Than create ipc-client
   if (cc.getPairsMap().size === 0){
     createCcCache(config.asset.toUpperCase(), config.currency.toUpperCase(), this.exchange);
   }else{
-    pairMap = cc.getPairsMap();
+    this.pairMap = cc.getPairsMap();
   }
 }
 
@@ -45,11 +44,11 @@ function createCcCache(asset, currency, exchange){
   if (currency == 'XBT')
     currency = 'BTC';
 
-  createClient('cryptocompare','myipcserver').then(()=>{
+  createClient('cryptocompare','/tmp/cc.cryptocompareserver').then(()=>{
     recieveFromQueue('cryptocompare', 'quota',(newTrade)=>{
       if (newTrade.asset == asset && newTrade.currency==currency && newTrade.exchange == exchange){
         const key = asset + currency+  exchange;
-        pairMap.set(key.toUpperCase(), newTrade);
+        this.pairMap.set(key.toUpperCase(), newTrade);
       }
     });
   })
@@ -64,9 +63,7 @@ CcCache.prototype.getTrades = function(since, callback, descending) {
     currency = 'BTC';
 
   const key = asset + currency+  this.exchange;
-  const trade = pairMap.get(key.toUpperCase());
-  // console.log("cc cache get key: " + key.toUpperCase());
-  // console.log(trade);
+  const trade = this.pairMap.get(key.toUpperCase());
   var parsedTrades = [];
 
   // var newTrade = {
@@ -75,7 +72,6 @@ CcCache.prototype.getTrades = function(since, callback, descending) {
   //   exchange: incomingTrade['M'],
   //   type: incomingTrade['T'],
   //   id: incomingTrade['ID'],
-  //   //Price: CCC.convertValueToDisplay(cointsym, incomingTrade['P']),
   //   price: incomingTrade['P'],
   //   quantity: incomingTrade['Q'],
   //   total: incomingTrade['TOTAL']
@@ -85,7 +81,7 @@ CcCache.prototype.getTrades = function(since, callback, descending) {
   if (trade){
     parsedTrades.push({
       tid: moment.unix(trade.id).valueOf() * 1000000,
-      date: parseInt(Math.round(trade.id), 10),
+      date: parseInt(Math.round(trade.timestamp), 10),
       price: parseFloat(trade.price),
       amount: parseFloat(trade.quantity),
       asset: trade.asset,
@@ -117,8 +113,6 @@ function createClient(connectionid, serverpath){
 
 function recieveFromQueue(queuename, messagetype, func){
   ipc.of[queuename].on(messagetype, (data)=>{
-    console.log ("we got messagetype: "+ messagetype + " message: "+data + " from socket: "+socket);
-
     func(data)
   });
 }

@@ -91,24 +91,29 @@ var pipeline = (settings) => {
     // plugins, however the pipeline only allows a single
     // emitting plugin for each event to be enabled.
     //console.log(pluginSubscriptions);
+    let pluginSubscriptionsFiltered = _.compact(pluginSubscriptions.map((subscription)=> {
+      if (_.isArray(subscription.emitter)){
+        let singleEventEmitters = subscription.emitter
+          .filter(s => _.size(plugins.filter(p => p.meta.slug === s)
+        ));
+        //console.log(singleEventEmitters);
 
-    let pluginSubscriptionsFiltered = pluginSubscriptions.filter(s => _.isArray(s.emitter)).map((subscription)=> {
-
-      let singleEventEmitters = subscription.emitter
-        .filter(s => _.size(plugins.filter(p => p.meta.slug === s)
-      ));
-      //console.log(singleEventEmitters);
-
-      if(_.size(singleEventEmitters) > 1) {
-        var error = `Multiple plugins are broadcasting`;
-        error += ` the event "${subscription.event}" (${singleEventEmitters.join(',')}).`;
-        error += 'This is unsupported.'
-        util.die(error);
-      } else {
-        subscription.emitter = singleEventEmitters[0];
+        if(_.size(singleEventEmitters) == 0) {
+          return undefined;
+        }else
+        if(_.size(singleEventEmitters) > 1) {
+          var error = `Multiple plugins are broadcasting`;
+          error += ` the event "${subscription.event}" (${singleEventEmitters.join(',')}).`;
+          error += 'This is unsupported.'
+          util.die(error);
+        } else {
+          subscription.emitter = singleEventEmitters[0];
+        }
+        return subscription;
+      }else{
+        return subscription;
       }
-      return subscription;
-    })
+    }))
 
     // subscribe interested plugins to
     // emitting plugins
@@ -190,7 +195,7 @@ var pipeline = (settings) => {
         marketType = mode;
 
       var Market = require(dirs.markets + marketType);
-
+      
       var market = new Market(config);
       var gekko = new GekkoStream(candleConsumers);
 

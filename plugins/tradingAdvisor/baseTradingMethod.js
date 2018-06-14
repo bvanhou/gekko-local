@@ -1,7 +1,6 @@
 var _ = require('lodash');
 var fs = require('fs');
 var util = require('../../core/util');
-var config = util.getConfig();
 var dirs = util.dirs();
 var log = require(dirs.core + 'log');
 
@@ -37,7 +36,7 @@ var allowedIndicators = _.keys(Indicators);
 var allowedTalibIndicators = _.keys(talib);
 var allowedTulipIndicators = _.keys(tulind);
 
-var Base = function(settings) {
+var Base = function(settings, config) {
   _.bindAll(this);
 
   // properties
@@ -230,8 +229,8 @@ Base.prototype.propogateTick = function(candle) {
   if(mode === 'realtime'){
     // Subtract number of minutes in current candle for instant start
     let startTimeMinusCandleSize = startTime.clone();
-    startTimeMinusCandleSize.subtract(this.tradingAdvisor.candleSize, "minutes"); 
-    
+    startTimeMinusCandleSize.subtract(this.tradingAdvisor.candleSize, "minutes");
+
     isPremature = candle.start < startTimeMinusCandleSize;
   }
   else{

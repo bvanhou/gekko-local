@@ -64,7 +64,7 @@ Actor.prototype.setupTradingMethod = function() {
     var tradingSettings = this.config[this.methodName];
   }
 
-  this.method = new Consultant(tradingSettings);
+  this.method = new Consultant(tradingSettings, this.config);
   this.method
     .on('advice', this.relayAdvice);
 
