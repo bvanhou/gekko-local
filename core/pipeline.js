@@ -1,6 +1,6 @@
 /*
 
-  A pipeline implements a full Gekko Flow based on a config and 
+  A pipeline implements a full Gekko Flow based on a config and
   a mode. The mode is an abstraction that tells Gekko what market
   to load (realtime, backtesting or importing) while making sure
   all enabled plugins are actually supported by that market.
@@ -27,7 +27,7 @@ var pipeline = (settings) => {
   // prepare a GekkoStream
   var GekkoStream = require(dirs.core + 'gekkoStream');
 
-  // all plugins
+  // all plugins instances
   var plugins = [];
   // all emitting plugins
   var emitters = {};
@@ -40,6 +40,11 @@ var pipeline = (settings) => {
   // meta information about every plugin that tells Gekko
   // something about every available plugin
   var pluginParameters = require(dirs.gekko + 'plugins');
+  const pluginParametersWithConfig = pluginParameters.map((plugin)=> {
+    plugin.config = config;
+    return plugin;
+  })
+
   // meta information about the events plugins can broadcast
   // and how they should hooked up to consumers.
   var subscriptions = require(dirs.gekko + 'subscriptions');
@@ -48,7 +53,7 @@ var pipeline = (settings) => {
   var loadPlugins = function(next) {
     // load all plugins
     async.mapSeries(
-      pluginParameters,
+      pluginParametersWithConfig,
       pluginHelper.load,
       function(error, _plugins) {
         if(error)
@@ -65,8 +70,9 @@ var pipeline = (settings) => {
   var referenceEmitters = function(next) {
 
     _.each(plugins, function(plugin) {
-      if(plugin.meta.emits)
+      if(plugin.meta.emits){
         emitters[plugin.meta.slug] = plugin;
+      }
     });
 
     next();
@@ -84,31 +90,32 @@ var pipeline = (settings) => {
     // some events can be broadcasted by different
     // plugins, however the pipeline only allows a single
     // emitting plugin for each event to be enabled.
-    _.each(
-      pluginSubscriptions.filter(s => _.isArray(s.emitter)),
-      subscription => {
-        var singleEventEmitters = subscription.emitter
-          .filter(s => _.size(plugins.filter(p => p.meta.slug === s)
-        ));
+    //console.log(pluginSubscriptions);
 
-        if(_.size(singleEventEmitters) > 1) {
-          var error = `Multiple plugins are broadcasting`;
-          error += ` the event "${subscription.event}" (${singleEventEmitters.join(',')}).`;
-          error += 'This is unsupported.'
-          util.die(error);
-        } else {
-          subscription.emitter = _.first(singleEventEmitters);
-        }
+    let pluginSubscriptionsFiltered = pluginSubscriptions.filter(s => _.isArray(s.emitter)).map((subscription)=> {
+
+      let singleEventEmitters = subscription.emitter
+        .filter(s => _.size(plugins.filter(p => p.meta.slug === s)
+      ));
+      //console.log(singleEventEmitters);
+
+      if(_.size(singleEventEmitters) > 1) {
+        var error = `Multiple plugins are broadcasting`;
+        error += ` the event "${subscription.event}" (${singleEventEmitters.join(',')}).`;
+        error += 'This is unsupported.'
+        util.die(error);
+      } else {
+        subscription.emitter = singleEventEmitters[0];
       }
-    );
+      return subscription;
+    })
 
     // subscribe interested plugins to
     // emitting plugins
     _.each(plugins, function(plugin) {
-      _.each(pluginSubscriptions, function(sub) {
+      _.each(pluginSubscriptionsFiltered, function(sub) {
 
         if(_.has(plugin, sub.handler)) {
-
           // if a plugin wants to listen
           // to something disabled
           if(!emitters[sub.emitter]) {

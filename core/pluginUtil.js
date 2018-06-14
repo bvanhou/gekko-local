@@ -5,7 +5,6 @@ var util = require(__dirname + '/util');
 
 var log = require(util.dirs().core + 'log');
 
-var config = util.getConfig();
 var pluginDir = util.dirs().plugins;
 var gekkoMode = util.gekkoMode();
 
@@ -55,16 +54,17 @@ var pluginHelper = {
     return error;
   },
   // loads a plugin
-  // 
+  //
   // @param Object plugin
   //    plugin config object
   // @param Function next
   //    callback
-  load: function(plugin, next) {
+  load: function(pluginWithConfig, next) {
+    // {plugin: plugin, config: config};
+    let plugin = pluginWithConfig;
+    const pluginConfig = pluginWithConfig.config[plugin.slug];
 
-    plugin.config = config[plugin.slug];
-
-    if(!plugin.config || !plugin.config.enabled)
+    if(!pluginConfig || !pluginConfig.enabled)
       return next();
 
     if(!_.contains(plugin.modes, gekkoMode)) {
@@ -87,7 +87,7 @@ var pluginHelper = {
       return next(cannotLoad);
 
     if(plugin.path)
-      var Constructor = require(pluginDir + plugin.path(config));
+      var Constructor = require(pluginDir + plugin.path(pluginWithConfig.config));
     else
       var Constructor = require(pluginDir + plugin.slug);
 
@@ -100,7 +100,7 @@ var pluginHelper = {
       var instance = new Constructor(plugin);
       instance.meta = plugin;
       _.defer(function() {
-        next(null, instance); 
+        next(null, instance);
       });
     }
 

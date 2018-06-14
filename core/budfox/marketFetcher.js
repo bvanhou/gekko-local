@@ -11,7 +11,6 @@ var moment = require('moment');
 var utc = moment.utc;
 var util = require(__dirname + '/../util');
 
-var config = util.getConfig();
 var log = require(util.dirs().core + 'log');
 var exchangeChecker = require(util.dirs().core + 'exchangeChecker');
 
@@ -22,7 +21,12 @@ var Fetcher = function(config) {
     throw 'TradeFetcher expects a config';
 
   var exchangeName = config.watch.exchange.toLowerCase();
-  var DataProvider = require(util.dirs().gekko + 'exchanges/' + exchangeName);
+  var DataProvider ;
+  if (config.watch.usecryptocompare){
+    DataProvider = require(util.dirs().gekko + 'cryptocompare/cccache');
+  }else{
+    DataProvider = require(util.dirs().gekko + 'exchanges/' + exchangeName);
+  }
   _.bindAll(this);
 
   // Create a public dataProvider object which can retrieve live

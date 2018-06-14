@@ -2,7 +2,6 @@ var _ = require('lodash');
 var config = require('../../core/util.js').getConfig();
 
 var sqlite = require('./handle');
-var sqliteUtil = require('./util');
 var util = require('../../core/util');
 var log = require('../../core/log');
 
@@ -10,18 +9,25 @@ var Store = function(done, pluginMeta) {
   _.bindAll(this);
   this.done = done;
 
+  this.watch = pluginMeta.config.watch;
+
   this.db = sqlite.initDB(false);
   this.db.serialize(this.upsertTables);
 
   this.cache = [];
   this.buffered = util.gekkoMode() === "importer";
+
+}
+
+Store.prototype.table = function(name){
+  return [name, this.watch.currency, this.watch.asset].join('_');
 }
 
 Store.prototype.upsertTables = function() {
   var createQueries = [
     `
       CREATE TABLE IF NOT EXISTS
-      ${sqliteUtil.table('candles')} (
+      ${this.table('candles')} (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         start INTEGER UNIQUE,
         open REAL NOT NULL,
@@ -56,7 +62,7 @@ Store.prototype.writeCandles = function() {
     this.db.run("BEGIN TRANSACTION");
 
     var stmt = this.db.prepare(`
-      INSERT OR IGNORE INTO ${sqliteUtil.table('candles')}
+      INSERT OR IGNORE INTO ${this.table('candles')}
       VALUES (?,?,?,?,?,?,?,?,?)
     `, function(err, rows) {
         if(err) {
@@ -80,8 +86,11 @@ Store.prototype.writeCandles = function() {
     });
 
     stmt.finalize();
+    log.debug('cache: '+ this.cache.length+ ' write candles for '+this.table('candles'));
+    //log.debug(JSON.stringify(this.cache));
+
     this.db.run("COMMIT");
-    
+
     this.cache = [];
   }
 
@@ -90,7 +99,7 @@ Store.prototype.writeCandles = function() {
 
 var processCandle = function(candle, done) {
   this.cache.push(candle);
-  if (!this.buffered || this.cache.length > 1000) 
+  if (!this.buffered || this.cache.length > 1000)
     this.writeCandles();
 
   done();

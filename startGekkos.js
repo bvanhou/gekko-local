@@ -1,0 +1,139 @@
+const _ = require('lodash');
+const promisify = require('tiny-promisify');
+const moment = require('moment');
+
+const pipelineRunner = promisify(require('./core/workers/pipeline/parent'));
+const pipeline = require('./core/pipeline');
+const util = require('./core/util');
+
+const base = require('./sample-config');
+const cryptocompare = require('./cryptocompare/cc');
+
+let strategies = ['CCI', 'DEMA', 'MACD', 'PPO', 'RSI', 'StochRSI', 'TMA', 'TSI', 'UO', 'varPPO']
+let strategiesMin = ['StochRSI', 'TMA', 'TSI']
+//const watchMarket = {"exchange":"poloniex","currency":"USDT","asset":"BTC"};
+
+// get all assets!
+var Trader = require(util.dirs().exchanges + 'kraken');
+capabilities = Trader.getCapabilities();
+
+cryptocompare.listenToWebsocket(capabilities).then(()=> {
+
+  for (let asset of  capabilities.assets){ // ['ETH'] ){
+    for (let currency of  ['EUR']){ //) { //capabilities.currencies
+      let market = _.find(capabilities.markets, (market) => {
+        return market.pair[0] === currency && market.pair[1] === asset
+      });
+
+      if (market && asset !== 'XDG'){ // we have market for it
+        let myconfig = {
+        "watch": {exchange: 'kraken',   currency: currency,      asset: asset, usecryptocompare : true},
+        "candleWriter":{"enabled":true,"adapter":"sqlite"},
+        "tradingAdvisor":{"enabled":false},
+        "rabbitmq":{"enabled": false},
+        "paperTrader":{"enabled":false},
+        "performanceAnalyzer":{"enabled":false},
+        "nodeipc":{"enabled": false, "enableProcessCandle": true, "enableProcessAdvice": false}, // we dont need nodeipc for sending quota here!
+        "mode":"realtime"}
+
+         startGekko(myconfig);
+      }
+   }
+ }
+})
+
+function startStrategies(){
+  for (let strategy of strategiesMin){
+    for (let asset of capabilities.assets ){ //
+      for (let currency of ['EUR'] ){ //capabilities.currencies
+        let market = _.find(capabilities.markets, (market) => {
+          return market.pair[0] === currency && market.pair[1] === asset
+        });
+
+        if (market && asset !== 'XDG'){ // we have market for it
+          startStrategy(strategy, {exchange: 'kraken',   currency: currency, asset: asset});
+        }
+      }
+    }
+    //startStrategy(strategy, {exchange: 'kraken',   currency: 'EUR', asset: 'ETH'});
+  }
+}
+
+function startStrategy(strategy, watchMarket){
+  console.log("start "+strategy)
+  let leeach_strategy = {
+                "watch":watchMarket,
+                "market":{"type":"leech"},
+                "mode":"realtime",
+                "rabbitmq":{"enabled": false},
+                "nodeipc":{"enabled": true, "enableProcessCandle": false, "enableProcessAdvice": true},
+                "candleWriter":{"enabled":false,"adapter":"sqlite"},
+                "paperTrader":{"enabled":false},
+                "performanceAnalyzer":{"enabled":false},
+                "tradingAdvisor":{"enabled":true,"method":strategy,"candleSize":1,"historySize":10}
+              };
+
+  const requiredHistoricalData = leeach_strategy.tradingAdvisor.candleSize * leeach_strategy.tradingAdvisor.historySize;
+
+  const optimal = moment().utc().startOf('minute')
+    .subtract(requiredHistoricalData, 'minutes')
+    .unix();
+
+  // TODO get Data some minutes ago from available MarketWatcher firstCandle!
+  // const available = moment
+  //   .utc(this.existingMarketWatcher.firstCandle.start)
+  //   .unix();
+
+  // startAt = moment.unix(Math.max(optimal, available)).utc().format();
+  leeach_strategy.market.from = moment.unix(optimal).utc().format();
+
+  startGekko(leeach_strategy);
+}
+
+setTimeout(startStrategies, 4000);
+
+function startGekkoAsChildProcess(body) {
+
+  const mode = body.mode;
+
+  let config = {};
+
+  _.merge(config, base, body);
+
+  let errored = false;
+  const child = pipelineRunner(mode, config, (err, event) => {
+
+    if(err) {
+      if(errored)
+        return;
+
+      errored = true;
+      console.error('RECEIVED ERROR IN GEKKO');
+      console.error(err);
+    }
+  });
+}
+
+function startGekko(body) {
+  const mode = body.mode;
+
+  let config = {};
+
+  _.merge(config, base, body);
+  /*
+  console.log(body)
+  console.log(base)
+  console.log(config)
+  */
+
+  var dirs = util.dirs();
+  util.setConfig(config);
+
+  // force correct gekko mode & config
+  util.setGekkoMode(mode);
+
+  pipeline({
+    config: config,
+    mode: mode
+  });
+}

@@ -3,22 +3,27 @@ var _ = require('lodash');
 var fs = require('fs');
 var toml = require('toml');
 
-var config = util.getConfig();
+//var config = util.getConfig();
 var dirs = util.dirs();
 var log = require(dirs.core + 'log');
 var CandleBatcher = require(dirs.core + 'candleBatcher');
 
 var moment = require('moment');
-var isLeecher = config.market && config.market.type === 'leech';
 
-var Actor = function(done) {
+
+var Actor = function(done, pluginMeta) {
   _.bindAll(this);
 
+  this.config = pluginMeta.config;
+
+  var isLeecher = this.config.market && this. config.market.type === 'leech';
+
   this.done = done;
+  //console.log(this.config); 
 
-  this.batcher = new CandleBatcher(config.tradingAdvisor.candleSize);
+  this.batcher = new CandleBatcher(this.config.tradingAdvisor.candleSize);
 
-  this.methodName = config.tradingAdvisor.method;
+  this.methodName = this.config.tradingAdvisor.method;
 
   this.setupTradingMethod();
 
@@ -55,8 +60,8 @@ Actor.prototype.setupTradingMethod = function() {
     Consultant.prototype[name] = fn;
   });
 
-  if(config[this.methodName]) {
-    var tradingSettings = config[this.methodName];
+  if(this.config[this.methodName]) {
+    var tradingSettings = this.config[this.methodName];
   }
 
   this.method = new Consultant(tradingSettings);

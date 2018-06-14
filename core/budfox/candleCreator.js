@@ -63,20 +63,25 @@ util.makeEventEmitter(CandleCreator);
 CandleCreator.prototype.write = function(batch) {
   var trades = batch.data;
 
+
   if(_.isEmpty(trades))
     return;
 
   trades = this.filter(trades);
   this.fillBuckets(trades);
   var candles = this.calculateCandles();
+  //console.log('CandleCreator calculateCandles: ' + JSON.stringify(candles));
 
   candles = this.addEmptyCandles(candles);
 
   if(_.isEmpty(candles))
-    return;  
+    return;
 
   // the last candle is not complete
   this.threshold = candles.pop().start;
+
+  // console.log('CandleCreator trades: ' + JSON.stringify(trades));
+  // console.log('CandleCreator candle: ' + JSON.stringify(candles));
 
   this.emit('candles', candles);
 }
@@ -147,6 +152,9 @@ CandleCreator.prototype.calculateCandle = function(trades) {
     candle.low = _.min([candle.low, f(trade.price)]);
     candle.volume += f(trade.amount);
     candle.vwp += f(trade.price) * f(trade.amount);
+    candle.asset = trade.asset;
+    candle.currency = trade.currency;
+    candle.exchange = trade.exchange;
   });
 
   candle.vwp /= candle.volume;
@@ -191,7 +199,10 @@ CandleCreator.prototype.addEmptyCandles = function(candles) {
       close: lastPrice,
       vwp: lastPrice,
       volume: 0,
-      trades: 0
+      trades: 0,
+      asset : candles[j].asset,
+      currency : candles[j].currency,
+      exchange : candles[j].exchange
     });
   }
   return candles;

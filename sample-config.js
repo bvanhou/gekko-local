@@ -33,8 +33,8 @@ config.watch = {
 config.tradingAdvisor = {
   enabled: true,
   method: 'MACD',
-  candleSize: 60,
-  historySize: 10,
+  candleSize: 120,
+  historySize: 20,
 }
 
 // Exponential Moving Averages settings:
@@ -160,6 +160,12 @@ config.StochRSI = {
   }
 };
 
+// TMA tripple Moving average
+config.TMA = {
+  short :7,
+  medium : 25,
+  long :99
+};
 
 // custom settings:
 config.custom = {
@@ -384,8 +390,17 @@ config.adviceWriter = {
 }
 
 config.rabbitmq = {
-  enabled: true
+  enabled: false
 }
+
+config.nodeipc = {
+  enabled: true,
+  serverpath: 'myipcserver',
+  connectionid: 'tradingbot',
+  enableProcessCandle: true,
+  enableProcessAdvice: true
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                       CONFIGURING ADAPTER
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -10,7 +10,8 @@ module.exports = cb => {
         cb(message.error);
         console.error(message.error);
       }
-
+      else if (message.log)
+        console.log(message.log);
       else
         cb(null, message);
 

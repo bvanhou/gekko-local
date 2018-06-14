@@ -8,7 +8,6 @@ var fs = require('fs');
 
 var util = require(__dirname + '/../util');
 var dirs = util.dirs();
-var config = util.getConfig();
 var log = require(dirs.core + 'log');
 var cp = require(dirs.core + 'cp');
 
