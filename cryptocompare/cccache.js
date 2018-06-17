@@ -44,7 +44,7 @@ function createCcCache(asset, currency, exchange){
   if (currency == 'XBT')
     currency = 'BTC';
 
-  createClient('cryptocompare','/tmp/cc.cryptocompareserver').then(()=>{
+  createClient('cryptocompare','/tmp/cc.cryptocompare').then(()=>{
     recieveFromQueue('cryptocompare', 'quota',(newTrade)=>{
       if (newTrade.asset == asset && newTrade.currency==currency && newTrade.exchange == exchange){
         const key = asset + currency+  exchange;

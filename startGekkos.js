@@ -22,10 +22,12 @@ let strategiesMin = ['MACD', 'PPO', 'StochRSI', 'TMA', 'TSI']
 var Trader = require(util.dirs().exchanges + 'kraken');
 capabilities = Trader.getCapabilities();
 
-let assets = ['ETH', 'XBT', 'XRP']; //for Kraken is XBT!
+let assets = ['ETH', 'XBT', 'XRP', 'XLM']; //for Kraken is XBT!
 //assets = capabilities.assets;
-cryptocompare.listenToWebsocket(capabilities, 'EUR', assets).then(()=> {
 
+startMarketWatchers();
+
+function startMarketWatchers() {
   for (let asset of assets) { // ['ETH'] ){ capabilities.assets
     for (let currency of  ['EUR']){ //) { //capabilities.currencies
       let market = _.find(capabilities.markets, (market) => {
@@ -48,7 +50,8 @@ cryptocompare.listenToWebsocket(capabilities, 'EUR', assets).then(()=> {
       }
    }
  }
-}).catch((error)=> log.error(error))
+}
+
 
 function startStrategies(){
   for (let strategy of strategiesMin){
