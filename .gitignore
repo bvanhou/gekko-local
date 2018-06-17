@@ -23,6 +23,9 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 
+#env
+.env
+
 # Dreamweaver added files
 _notes
 dwsync.xml
