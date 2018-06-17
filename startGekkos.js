@@ -1,3 +1,7 @@
+const dotenv = require("dotenv");
+const path  = require ("path");
+dotenv.config({ path: ".env" });
+
 const _ = require('lodash');
 const promisify = require('tiny-promisify');
 const moment = require('moment');
@@ -8,6 +12,8 @@ const util = require('./core/util');
 
 const base = require('./sample-config');
 const cryptocompare = require('./cryptocompare/cc');
+
+const log = require('./core/log');
 
 //let strategiesMin = ['CCI', 'DEMA', 'MACD', 'PPO', 'RSI', 'StochRSI', 'TMA', 'TSI', 'UO', 'varPPO']
 let strategiesMin = ['MACD', 'PPO', 'StochRSI', 'TMA', 'TSI']
@@ -37,7 +43,7 @@ cryptocompare.listenToWebsocket(capabilities, 'EUR', assets).then(()=> {
         "nodeipc":{"enabled": false, "enableProcessAdvice": false}, // we dont need nodeipc for sending quota here!
         "mode":"realtime"}
 
-        console.log("start watch gekko for "+asset+' '+currency)
+        log.info("start watch gekko for "+asset+' '+currency)
         startGekko(myconfig);
       }
    }

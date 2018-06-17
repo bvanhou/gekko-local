@@ -30,7 +30,7 @@ function getCcSubsriptions(){
 function subscribeToAllExchanges(){
   getCcSubsriptions().then((data) => {
   	currentSubs = data['USD']['TRADES'];
-  	log.info(currentSubs);
+  	log.debug(currentSubs);
   });
 }
 
@@ -65,7 +65,7 @@ function listenToWebsocket(capabilities, currency, assets){
   let socket = io(streamUrl, { transports: ['websocket']});
   socket.on('connect', function(){
     var subs = [];
-    log.info("we are connected");
+    log.debug("we are connected");
     createServer('cryptocompare', '/tmp/cc.cryptocompareserver').then(()=> {
 
     // get all tradeable pairs for exchange, not works! better match assets to currencies
@@ -97,7 +97,7 @@ function listenToWebsocket(capabilities, currency, assets){
       if (newTrade && newTrade.price){
         const key = newTrade.asset + newTrade.currency+  newTrade.exchange;
         const ts = moment.unix(newTrade.timestamp)
-        log.debug("cc got " + newTrade.asset + ' ' + newTrade.currency+ ' '+ newTrade.exchange + ' '+ ts.utc().format());
+        // log.debug("cc got " + newTrade.asset + ' ' + newTrade.currency+ ' '+ newTrade.exchange + ' '+ ts.utc().format());
         pairMap.set(key.toUpperCase(), newTrade);
         broadcast(newTrade);
       }

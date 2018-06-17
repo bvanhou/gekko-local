@@ -1,3 +1,9 @@
+var winston = require('winston');
+const { format } = winston;
+const { combine, timestamp, label, printf } = format;
+
+const SentryTransport = require('./logstransport/sentry_transport');
+const LogzTransport = require('./logstransport/logz_transport');
 /*
 
   Lightweight logger, print everything that is send to error, warn
@@ -13,6 +19,40 @@ var util = require('./util');
 var config = util.getConfig();
 var debug = config.debug;
 var silent = config.silent;
+
+const winstonLogger = winston.createLogger({
+  transports: [
+
+    new winston.transports.File({
+      name : 'filelogger',
+      filename: 'logs/all-gekko.log',
+      level: 'debug',
+      handleExceptions: false,
+      json: false,
+      maxsize: 5242880, //5MB
+      maxFiles: 5,
+      colorize: false,
+      format: combine(
+          timestamp(), // utc!
+          winston.format.printf(info =>`${info.timestamp} ${info.level}: ${info.message}`)
+      )
+    }),
+
+    // send only errors to Sentry (good library for errors fixing)
+    new SentryTransport({
+      token : process.env.SENTRY_DSN,
+      level: 'error'
+    }),
+
+    new LogzTransport({
+      token: process.env.LOGZ_KEY,
+      host: 'listener.logz.io',
+      type: 'gekko',
+      level: 'info'
+    }),
+  ]
+});
+
 
 var sendToParent = function() {
   var send = method => (...args) => {
@@ -30,6 +70,7 @@ var sendToParent = function() {
 var Log = function() {
   _.bindAll(this);
   this.env = util.gekkoEnv();
+  this.mode = util.gekkoMode();
 
   if(this.env === 'standalone')
     this.output = console;
@@ -47,6 +88,14 @@ Log.prototype = {
     message += fmt.apply(null, args);
 
     this.output[method](message);
+    if (this.mode === 'realtime'){
+      // log with winston
+      if (args.length> 1){
+        winstonLogger.log(method, args[0], {meta : args[1]});
+      }else {
+        winstonLogger.log(method, args[0]);
+      }
+    }
   },
   error: function() {
     this._write('error', arguments);
@@ -66,7 +115,7 @@ Log.prototype = {
 
 if(debug)
   Log.prototype.debug = function() {
-    this._write('info', arguments, 'DEBUG');  
+    this._write('debug', arguments, 'DEBUG');
   }
 else
   Log.prototype.debug = _.noop;
