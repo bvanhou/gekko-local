@@ -48,7 +48,7 @@ cryptocompare.listenToWebsocket(capabilities, 'EUR', assets).then(()=> {
       }
    }
  }
-})
+}).catch((error)=> log.error(error))
 
 function startStrategies(){
   for (let strategy of strategiesMin){

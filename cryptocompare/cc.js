@@ -103,11 +103,17 @@ function listenToWebsocket(capabilities, currency, assets){
       }
       resolve(undefined);
     });
-  })
 
+    socket.on('connect_error', (error) => {
+      reject(error);
+    });
+
+  })
+  
   socket.on('error', (error) => {
     log.error(error);
   });
+
 
   return promise;
 }
