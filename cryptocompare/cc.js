@@ -97,7 +97,7 @@ function listenToWebsocket(capabilities, currency, assets){
       if (newTrade && newTrade.price){
         const key = newTrade.asset + newTrade.currency+  newTrade.exchange;
         const ts = moment.unix(newTrade.timestamp)
-        // log.debug("cc got " + newTrade.asset + ' ' + newTrade.currency+ ' '+ newTrade.exchange + ' '+ ts.utc().format());
+        log.debug("cc got " + newTrade.asset + ' ' + newTrade.currency+ ' '+ newTrade.exchange + ' '+ ts.utc().format());
         pairMap.set(key.toUpperCase(), newTrade);
         broadcast(newTrade);
       }
