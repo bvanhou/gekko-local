@@ -63,6 +63,7 @@ var sendToParent = function() {
     error: send('error'),
     warn: send('warn'),
     info: send('info'),
+    debug: send('info'), //TODO there is no debug in parent?
     write: send('write')
   }
 }
