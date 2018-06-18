@@ -54,10 +54,7 @@ var Fetcher = function(config) {
     config.watch.currency
   ].join('/');
 
-  log.info('Starting to watch the market:',
-    this.exchange.name,
-    this.pair
-  );
+  log.info('Starting to watch the market:'+ this.exchange.name + ' '+ this.pair  );
 
   // if the exchange returns an error
   // we will keep on retrying until next
@@ -87,15 +84,15 @@ Fetcher.prototype.fetch = function() {
   } else
     since = false;
 
-  this.tries = 0; 
-  log.debug('Requested', this.pair, 'trade data from', this.exchange.name, '...');
+  this.tries = 0;
+  log.debug('Requested ' + this.pair + ' trade data from ' + this.exchange.name + ' ...');
   this._fetch(since);
 }
 
 Fetcher.prototype.processTrades = function(err, trades) {
   if(err || _.isEmpty(trades)) {
     if(err) {
-      log.warn(this.exchange.name, 'returned an error while fetching trades:', err);
+      log.warn(this.exchange.name + 'returned an error while fetching trades:', err);
       log.debug('refetching...');
     } else
       log.debug('Trade fetch came back empty, refetching...');
