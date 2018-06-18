@@ -9,8 +9,8 @@ var adapter = config[config.adapter];
 var Reader = require(dirs.gekko + adapter.path + '/reader');
 var daterange = config.backtest.daterange;
 
-var to = moment.utc(daterange.to);
-var from = moment.utc(daterange.from);
+var to = moment.utc(daterange.to, "YYYY-MM-DD"); //warnig deprecated fix
+var from = moment.utc(daterange.from, "YYYY-MM-DD");
 
 if(to <= from)
   util.die('This daterange does not make sense.')
