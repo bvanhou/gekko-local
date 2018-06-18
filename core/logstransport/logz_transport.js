@@ -12,6 +12,7 @@ class LogzTransport extends Transport {
   constructor(opts = {}) {
     super(opts);
 
+    this.silent = opts.silent;
     this.name = 'logz_transport';
     this.token = opts.token;
     this.host = opts.host;
