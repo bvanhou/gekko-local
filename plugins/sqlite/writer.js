@@ -15,7 +15,7 @@ var Store = function(done, pluginMeta) {
   this.db.serialize(this.upsertTables);
 
   this.cache = [];
-  this.buffered = util.gekkoMode() === "importer" || this.watch.usecryptocompare;
+  this.buffered = util.gekkoMode() === "importer" || true;
 
   if (this.config.watch.tickrate)
       var TICKRATE = this.config.watch.tickrate;
@@ -117,7 +117,7 @@ Store.prototype.processCandle = function(candle, done) {
   // log.debug('got candle for '+this.table('candles') + ' '+ candle.asset + ' '+ candle.start.format('YYYY-MM-DD HH:mm:ss'));
   // cache candles for 15sec
   let writeOverTimeout = false;
-  if(_.isEmpty(this.cache) && this.watch.usecryptocompare){
+  if(_.isEmpty(this.cache)){
     //console.log('start timer: '+new Date())
     setTimeout(()=> {      this.writeCandles();    }, this.tickrate)
   }

@@ -36,7 +36,7 @@ function startMarketWatchers() {
 
       if (market && asset !== 'XDG'){ // we have market for it
         let myconfig = {
-        "watch": {exchange: 'kraken',   currency: currency,      asset: asset, usecryptocompare : true},
+        "watch": {exchange: 'kraken',   currency: currency,      asset: asset, usecryptocompare : false},
         "candleWriter":{"enabled":true,"adapter":"sqlite"},
         "tradingAdvisor":{"enabled":false},
         "rabbitmq":{"enabled": false},

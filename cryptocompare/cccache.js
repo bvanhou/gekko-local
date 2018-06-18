@@ -5,6 +5,7 @@ const moment = require('moment');
 const cc = require ('./cc');
 var util = require('./../core/util');
 
+const log = require ('../core/log');
 
 // substitue for a exchange
 var CcCache = function(config) {
@@ -46,6 +47,7 @@ function createCcCache(asset, currency, exchange){
 
   createClient('cryptocompare','/tmp/cc.cryptocompare').then(()=>{
     recieveFromQueue('cryptocompare', 'quota',(newTrade)=>{
+      log.debug('got new quote: '+newTrade.asset + ' '+newTrade.currency + ' '+newTrade.exchange);
       if (newTrade.asset == asset && newTrade.currency==currency && newTrade.exchange == exchange){
         const key = asset + currency+  exchange;
         this.pairMap.set(key.toUpperCase(), newTrade);

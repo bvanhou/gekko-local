@@ -87,8 +87,8 @@ Fetcher.prototype.fetch = function() {
   } else
     since = false;
 
-  this.tries = 0;
-  // log.debug('Requested', this.pair, 'trade data from', this.exchange.name, '...');
+  this.tries = 0; 
+  log.debug('Requested', this.pair, 'trade data from', this.exchange.name, '...');
   this._fetch(since);
 }
 
