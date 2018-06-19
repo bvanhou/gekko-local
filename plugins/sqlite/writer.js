@@ -64,12 +64,14 @@ Store.prototype.upsertTables = function() {
 
 let synchronize = false; // for synchronizing if setTimeout also wants to write
 Store.prototype.writeCandles = function() {
+  log.debug('synchronize '+synchronize + ' '+this.cache.length);
   if (synchronize)
     return;
-  synchronize = true;
 
   if(_.isEmpty(this.cache))
     return;
+
+  synchronize = true;
 
   var transaction = function() {
     this.db.run("BEGIN TRANSACTION");
@@ -114,12 +116,12 @@ Store.prototype.processCandle = function(candle, done) {
   if (!this.config.candleWriter.enabled)
     return;
 
-  // log.debug('got candle for '+this.table('candles') + ' '+ candle.asset + ' '+ candle.start.format('YYYY-MM-DD HH:mm:ss'));
+  log.debug('got candle for '+this.table('candles') + ' '+ candle.asset + ' '+ candle.start.format('YYYY-MM-DD HH:mm:ss'));
   // cache candles for 15sec
-  let writeOverTimeout = false;
   if(_.isEmpty(this.cache)){
-    //console.log('start timer: '+new Date())
-    setTimeout(()=> {      this.writeCandles();    }, this.tickrate)
+    //log.debug('start timer: '+new Date())
+    setTimeout(()=> { log.debug('start writing: ' + this.cache.length);
+                      this.writeCandles();    }, this.tickrate*1000);
   }
   this.cache.push(candle);
 
