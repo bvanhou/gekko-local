@@ -1,8 +1,13 @@
-short = 10
+#short = "10..20:2"
+#long = "21..61:10"
+short = 18
 long = 21
-signal = 9
+signal=10
+#signal = 9..15:1
 
 [thresholds]
 down = -0.025
 up = 0.025
 persistence = 1
+
+#0.045|1|-0.015

@@ -4,6 +4,8 @@ var util = require('../../core/util');
 var dirs = util.dirs();
 var log = require(dirs.core + 'log');
 
+var stoplossHelper = require ('../stoploss');
+
 var ENV = util.gekkoEnv();
 var mode = util.gekkoMode();
 var startTime = util.getStartTime();
@@ -56,6 +58,7 @@ var Base = function(settings, config) {
   this.deferredTicks = [];
 
   this._prevAdvice;
+  this.stoploss;
 
   this.candleProps = {
     open: [],
@@ -84,6 +87,9 @@ var Base = function(settings, config) {
 
   // let's run the implemented starting point
   this.init();
+
+  if (this.tradingAdvisor.stoploss && this.tradingAdvisor.stoploss.enabled)
+    this.stoplossInit(this.tradingAdvisor.stoploss.procent, this.tradingAdvisor.stoploss.trailingStep);
 
   if(!config.debug || !this.log)
     this.log = function() {};
@@ -239,6 +245,7 @@ Base.prototype.propogateTick = function(candle) {
 
   if(isAllowedToCheck && !isPremature) {
     this.log(candle);
+    this.stoplossCheck(candle);
     this.check(candle);
   }
   this.processedTicks++;
@@ -332,6 +339,14 @@ Base.prototype.advice = function(newPosition, _candle) {
     portfolio: 1,
     candle
   });
+
+  if (this.stoploss){
+    if (newPosition === 'long'){
+      this.stoploss.create(candle.close);
+    }else if (newPosition === 'short'){
+      this.stoploss.destroy();
+    }
+  }
 }
 
 // Because the trading method might be async we need
@@ -352,5 +367,22 @@ Base.prototype.finish = function(done) {
   // and call after we are..
   this.finishCb = done;
 }
+
+Base.prototype.stoplossInit = function(percentage, trailingStep) {
+   this.stoploss = stoplossHelper.trailingStopLoss(percentage, trailingStep);
+}
+
+Base.prototype.stoplossCheck = function(candle) {
+  if (this.stoploss){
+    if(this.stoploss.isTriggered(candle.close)) {
+      //log.debug(' ----------------------------- stoploss triggered -----------------------')
+      this.advice('short');
+      this.stoploss.destroy();
+    }else{
+      this.stoploss.update(candle.close);
+    }
+  }
+}
+
 
 module.exports = Base;

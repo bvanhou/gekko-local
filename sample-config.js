@@ -35,6 +35,11 @@ config.tradingAdvisor = {
   method: 'MACD',
   candleSize: 120,
   historySize: 20,
+  stoploss : {
+    enabled : false,
+    procent : 10,
+    trailingStep : 20
+  }
 }
 
 // Exponential Moving Averages settings:
@@ -54,13 +59,13 @@ config.DEMA = {
 config.MACD = {
   // EMA weight (α)
   // the higher the weight, the more smooth (and delayed) the line
-  short: 10,
+  short: 18,
   long: 21,
-  signal: 9,
+  signal: 10,
   // the difference between the EMAs (to act as triggers)
   thresholds: {
-    down: -0.025,
-    up: 0.025,
+    down: -0.015, 
+    up: 0.045,
     // How many candle intervals should a trend persist
     // before we consider it real?
     persistence: 1
@@ -196,15 +201,15 @@ config.paperTrader = {
   // start balance, on what the current balance is compared with
   simulationBalance: {
     // these are in the unit types configured in the watcher.
-    asset: 1,
-    currency: 100,
+    asset: 0,
+    currency: 10000,
   },
   // how much fee in % does each trade cost?
-  feeMaker: 0.15,
+  feeMaker: 0.25,
   feeTaker: 0.25,
   feeUsing: 'maker',
   // how much slippage/spread should Gekko assume per trade?
-  slippage: 0.05,
+  slippage: 0.1,
 }
 
 config.performanceAnalyzer = {
@@ -450,11 +455,11 @@ config.mongodb = {
 // @link: https://gekko.wizb.it/docs/commandline/backtesting.html
 
 config.backtest = {
-  daterange: 'scan',
-// daterange: {
-//   from: "2018-03-01",
-//   to: "2018-04-28"
-//},
+//  daterange: 'scan',
+ daterange: {
+   from: "2018-01-01 00:00:00",
+   to: "2018-06-01 00:00:00"
+},
   batchSize: 50
 }
 

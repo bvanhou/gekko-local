@@ -1,5 +1,5 @@
-weight = 21
+weight = 26
 
 [thresholds]
-down = -0.025
-up = 0.025
+down = -0.02
+up = 0.08

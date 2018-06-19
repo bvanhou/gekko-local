@@ -1,3 +1,7 @@
+#short = 5..10:1
+#medium = 20..35:1
+#long = 90..110:2
+
+long = 96
 short = 7
-medium = 25
-long = 99
+medium = 35

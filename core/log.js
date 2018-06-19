@@ -48,7 +48,7 @@ const winstonLogger = winston.createLogger({
       token: process.env.LOGZ_KEY,
       host: 'listener.logz.io',
       type: 'gekko',
-      level: 'info'
+      level: 'error'
     }),
   ]
 });
@@ -93,7 +93,7 @@ Log.prototype = {
     message += messageWithArgs
     this.output[method](message);
 
-    if (this.mode === 'realtime'){
+    if (this.mode === 'realtime' || this.mode === 'backtest'){
       // log with winston
       winstonLogger.log(method, messageWithArgs);
     }
