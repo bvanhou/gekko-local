@@ -80,6 +80,7 @@ function startStrategy(strategy, watchMarket){
                 "candleWriter":{"enabled":false,"adapter":"sqlite"},
                 "paperTrader":{"enabled":false},
                 "performanceAnalyzer":{"enabled":false},
+                "adviceLogger":{"enabled":true},
                 "tradingAdvisor":{"enabled":true,"method":strategy,"candleSize":2,"historySize":10}
               };
 

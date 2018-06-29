@@ -7,7 +7,6 @@ var sqlite = require('./handle');
 var Reader = function(config) {
   _.bindAll(this);
   this.watch = config.watch;
-  console.log(this.watch);
   this.db = sqlite.initDB(true);
 }
 
