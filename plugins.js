@@ -198,6 +198,14 @@ var plugins = [
    async: true,
    silent: false,
    modes: ['realtime','backtest']
+ },
+ {
+  name: 'NodeIPC',
+  description: 'Sends recommendations over node ipc.',
+  slug: 'nodeipc',
+  async: true,
+  silent: false,
+  modes: ['realtime']
  }
 ];
 
