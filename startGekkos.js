@@ -16,7 +16,7 @@ const cryptocompare = require('./cryptocompare/cc');
 const log = require('./core/log');
 
 //let strategiesMin = ['CCI', 'DEMA', 'MACD', 'PPO', 'RSI', 'StochRSI', 'TMA', 'TSI', 'UO', 'varPPO']
-let strategiesMin = ['MACD', 'TSI'] //'PPO', 'StochRSI', 'TMA',
+let strategiesMin = ['MACD', 'TSI', 'PPO', 'StochRSI', 'TMA'] //
 
 // get all assets!
 var Trader = require(util.dirs().exchanges + 'kraken');
