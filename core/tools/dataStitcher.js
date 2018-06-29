@@ -3,12 +3,12 @@ var fs = require('fs');
 var moment = require('moment');
 
 var util = require('../../core/util');
-var config = util.getConfig();
 var dirs = util.dirs();
 var log = require(dirs.core + '/log');
 
-var Stitcher = function(batcher) {
+var Stitcher = function(batcher, config) {
   this.batcher = batcher;
+  this.config = config;
 }
 
 Stitcher.prototype.ago = function(ts) {
@@ -19,13 +19,13 @@ Stitcher.prototype.ago = function(ts) {
 
 Stitcher.prototype.verifyExchange = function() {
   var exchangeChecker = require(dirs.core + 'exchangeChecker');
-  var slug = config.watch.exchange.toLowerCase();
+  var slug = this.config.watch.exchange.toLowerCase();
   var exchange = exchangeChecker.getExchangeCapabilities(slug);
 
   if(!exchange)
     util.die(`Unsupported exchange: ${slug}`);
 
-  var error = exchangeChecker.cantMonitor(config.watch);
+  var error = exchangeChecker.cantMonitor(this.config.watch);
   if(error)
     util.die(error, true);
 }
@@ -38,13 +38,13 @@ Stitcher.prototype.prepareHistoricalData = function(done) {
   // - step 3: see if overlap
   // - step 4: feed candle stream into CandleBatcher
 
-  if(config.tradingAdvisor.historySize === 0)
+  if(this.config.tradingAdvisor.historySize === 0)
     return done();
 
-  var requiredHistory = config.tradingAdvisor.candleSize * config.tradingAdvisor.historySize;
-  var Reader = require(dirs.plugins + config.adapter + '/reader');
-  
-  this.reader = new Reader;
+  var requiredHistory = this.config.tradingAdvisor.candleSize * this.config.tradingAdvisor.historySize;
+  var Reader = require(dirs.plugins + this.config.adapter + '/reader');
+
+  this.reader = new Reader(this.config);
 
   log.info(
     '\tThe trading method requests',
@@ -97,7 +97,7 @@ Stitcher.prototype.prepareHistoricalData = function(done) {
       log.info('\tPreventing Gekko from requesting', minutesAgo, 'minutes of history.');
       idealExchangeStartTime = endTime.clone().subtract(maxMinutesAgo, 'minutes');
       idealExchangeStartTimeTS = idealExchangeStartTime.unix();
-    } 
+    }
 
     log.debug('\tFetching exchange data since', this.ago(idealExchangeStartTimeTS))
     this.checkExchangeTrades(idealExchangeStartTime, function(err, exchangeData) {
@@ -179,14 +179,14 @@ Stitcher.prototype.prepareHistoricalData = function(done) {
 }
 
 Stitcher.prototype.checkExchangeTrades = function(since, next) {
-  var provider = config.watch.exchange.toLowerCase();
+  var provider = this.config.watch.exchange.toLowerCase();
   var DataProvider = require(util.dirs().gekko + 'exchanges/' + provider);
 
-  var exchangeConfig = config.watch;
+  var exchangeConfig = this.config.watch;
 
   // include trader config if trading is enabled
-  if (_.isObject(config.trader) && config.trader.enabled) {
-    exchangeConfig = _.extend(config.watch, config.trader);
+  if (_.isObject(this.config.trader) && this.config.trader.enabled) {
+    exchangeConfig = _.extend(this.config.watch, this.config.trader);
   }
 
   var watcher = new DataProvider(exchangeConfig);

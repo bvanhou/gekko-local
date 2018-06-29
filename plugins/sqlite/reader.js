@@ -1,16 +1,19 @@
 var _ = require('lodash');
 var util = require('../../core/util.js');
-var config = util.getConfig();
 var log = require(util.dirs().core + 'log');
 
 var sqlite = require('./handle');
-var sqliteUtil = require('./util');
 
-var Reader = function() {
+var Reader = function(config) {
   _.bindAll(this);
+  this.watch = config.watch;
+  console.log(this.watch);
   this.db = sqlite.initDB(true);
 }
 
+Reader.prototype.table = function(name){
+  return [name, this.watch.currency, this.watch.asset].join('_');
+}
 
 // returns the most recent window complete candle
 // windows within `from` and `to`
@@ -21,7 +24,7 @@ Reader.prototype.mostRecentWindow = function(from, to, next) {
   var maxAmount = to - from + 1;
 
   this.db.all(`
-    SELECT start from ${sqliteUtil.table('candles')}
+    SELECT start from ${this.table('candles')}
     WHERE start <= ${to} AND start >= ${from}
     ORDER BY start DESC
   `, function(err, rows) {
@@ -80,7 +83,7 @@ Reader.prototype.mostRecentWindow = function(from, to, next) {
 Reader.prototype.tableExists = function(name, next) {
 
   this.db.all(`
-    SELECT name FROM sqlite_master WHERE type='table' AND name='${sqliteUtil.table(name)}';
+    SELECT name FROM sqlite_master WHERE type='table' AND name='${this.table(name)}';
   `, function(err, rows) {
     if(err) {
       console.error(err);
@@ -96,7 +99,7 @@ Reader.prototype.get = function(from, to, what, next) {
     what = '*';
 
   this.db.all(`
-    SELECT ${what} from ${sqliteUtil.table('candles')}
+    SELECT ${what} from ${this.table('candles')}
     WHERE start <= ${to} AND start >= ${from}
     ORDER BY start ASC
   `, function(err, rows) {
@@ -111,7 +114,7 @@ Reader.prototype.get = function(from, to, what, next) {
 
 Reader.prototype.count = function(from, to, next) {
   this.db.all(`
-    SELECT COUNT(*) as count from ${sqliteUtil.table('candles')}
+    SELECT COUNT(*) as count from ${this.table('candles')}
     WHERE start <= ${to} AND start >= ${from}
   `, function(err, res) {
     if(err) {
@@ -125,7 +128,7 @@ Reader.prototype.count = function(from, to, next) {
 
 Reader.prototype.countTotal = function(next) {
   this.db.all(`
-    SELECT COUNT(*) as count from ${sqliteUtil.table('candles')}
+    SELECT COUNT(*) as count from ${this.table('candles')}
   `, function(err, res) {
     if(err) {
       console.error(err);
@@ -142,12 +145,12 @@ Reader.prototype.getBoundry = function(next) {
     SELECT
     (
       SELECT start
-      FROM ${sqliteUtil.table('candles')}
+      FROM ${this.table('candles')}
       ORDER BY start LIMIT 1
     ) as 'first',
     (
       SELECT start
-      FROM ${sqliteUtil.table('candles')}
+      FROM ${this.table('candles')}
       ORDER BY start DESC
       LIMIT 1
     ) as 'last'

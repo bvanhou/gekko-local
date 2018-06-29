@@ -19,7 +19,7 @@ var Actor = function(done, pluginMeta) {
   var isLeecher = this.config.market && this. config.market.type === 'leech';
 
   this.done = done;
-  //console.log(this.config); 
+  //console.log(this.config);
 
   this.batcher = new CandleBatcher(this.config.tradingAdvisor.candleSize);
 
@@ -35,7 +35,7 @@ var Actor = function(done, pluginMeta) {
   // the realtime "leech" market won't use the stitcher
   if(mode === 'realtime' && !isLeecher) {
     var Stitcher = require(dirs.tools + 'dataStitcher');
-    var stitcher = new Stitcher(this.batcher);
+    var stitcher = new Stitcher(this.batcher, this.config);
     stitcher.prepareHistoricalData(done);
   } else
     done();

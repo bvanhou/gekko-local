@@ -91,7 +91,11 @@ Log.prototype = {
 
     // only for stdout
     message += messageWithArgs
-    this.output[method](message);
+    if (method ==='debug'){
+      console.log(message);
+    }else {
+      this.output[method](message);
+    }
 
     if (this.mode === 'realtime' || this.mode === 'backtest'){
       // log with winston

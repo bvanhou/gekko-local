@@ -116,7 +116,7 @@ Store.prototype.processCandle = function(candle, done) {
   if (!this.config.candleWriter.enabled)
     return;
 
-  log.debug('got candle for '+this.table('candles') + ' '+ candle.asset + ' '+ candle.start.format('YYYY-MM-DD HH:mm:ss'));
+  // log.debug('got candle for '+this.table('candles') + ' '+ candle.asset + ' '+ candle.start.format('YYYY-MM-DD HH:mm:ss'));
   // cache candles for 15sec
   if(_.isEmpty(this.cache)){
     //log.debug('start timer: '+new Date())

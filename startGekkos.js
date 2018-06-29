@@ -16,7 +16,7 @@ const cryptocompare = require('./cryptocompare/cc');
 const log = require('./core/log');
 
 //let strategiesMin = ['CCI', 'DEMA', 'MACD', 'PPO', 'RSI', 'StochRSI', 'TMA', 'TSI', 'UO', 'varPPO']
-let strategiesMin = ['MACD', 'PPO', 'StochRSI', 'TMA', 'TSI']
+let strategiesMin = ['MACD', 'TSI'] //'PPO', 'StochRSI', 'TMA',
 
 // get all assets!
 var Trader = require(util.dirs().exchanges + 'kraken');
@@ -80,7 +80,7 @@ function startStrategy(strategy, watchMarket){
                 "candleWriter":{"enabled":false,"adapter":"sqlite"},
                 "paperTrader":{"enabled":false},
                 "performanceAnalyzer":{"enabled":false},
-                "tradingAdvisor":{"enabled":true,"method":strategy,"candleSize":1,"historySize":10}
+                "tradingAdvisor":{"enabled":true,"method":strategy,"candleSize":2,"historySize":10}
               };
 
   const requiredHistoricalData = leeach_strategy.tradingAdvisor.candleSize * leeach_strategy.tradingAdvisor.historySize;

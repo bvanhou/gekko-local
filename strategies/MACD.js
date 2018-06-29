@@ -37,6 +37,7 @@ method.init = function() {
 // what happens on every new candle?
 method.update = function(candle) {
   // nothing!
+  this.candle = candle;
 }
 
 // for debugging purposes: log the last calculated
@@ -48,7 +49,7 @@ method.log = function() {
   var diff = macd.diff;
   var signal = macd.signal.result;
 
-  log.debug('calculated MACD properties for candle:');
+  log.debug('calculated MACD properties for candle: '+this.candle.asset);
   log.debug('\t', 'short:', macd.short.result.toFixed(digits));
   log.debug('\t', 'long:', macd.long.result.toFixed(digits));
   log.debug('\t', 'macd:', diff.toFixed(digits));

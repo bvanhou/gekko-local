@@ -33,7 +33,7 @@ config.watch = {
 config.tradingAdvisor = {
   enabled: true,
   method: 'MACD',
-  candleSize: 120,
+  candleSize: 10,
   historySize: 20,
   stoploss : {
     enabled : false,
@@ -42,6 +42,23 @@ config.tradingAdvisor = {
   }
 }
 
+config.Threshold = {
+  ceiling : 490,
+  bottom : 470
+}
+config.neuralnet_v2 = {
+  threshold_buy : 1.0,
+  threshold_sell : -1.0,
+
+  learning_rate : 0.01,
+  momentum : 0.1,
+  decay : 0.01,
+  stoploss_enabled : false,
+  stoploss_threshold : 0.85,
+  hodl_threshold : 1,
+  price_buffer_len : 100,
+  min_predictions : 1000
+}
 // Exponential Moving Averages settings:
 config.DEMA = {
   // EMA weight (α)
@@ -64,7 +81,7 @@ config.MACD = {
   signal: 10,
   // the difference between the EMAs (to act as triggers)
   thresholds: {
-    down: -0.015, 
+    down: -0.015,
     up: 0.045,
     // How many candle intervals should a trend persist
     // before we consider it real?
@@ -205,11 +222,11 @@ config.paperTrader = {
     currency: 10000,
   },
   // how much fee in % does each trade cost?
-  feeMaker: 0.25,
+  feeMaker: 0.05,
   feeTaker: 0.25,
   feeUsing: 'maker',
   // how much slippage/spread should Gekko assume per trade?
-  slippage: 0.1,
+  slippage: 0.05,
 }
 
 config.performanceAnalyzer = {
@@ -386,7 +403,7 @@ config.ifttt = {
 }
 
 config.candleWriter = {
-  enabled: false
+  enabled: true
 }
 
 config.adviceWriter = {
@@ -458,7 +475,7 @@ config.backtest = {
 //  daterange: 'scan',
  daterange: {
    from: "2018-01-01 00:00:00",
-   to: "2018-06-01 00:00:00"
+   to: "2018-06-18 00:00:00"
 },
   batchSize: 50
 }

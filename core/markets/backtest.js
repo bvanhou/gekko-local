@@ -1,32 +1,33 @@
 var _ = require('lodash');
 var util = require('../util');
-var config = util.getConfig();
 var dirs = util.dirs();
 var log = require(dirs.core + 'log');
 var moment = require('moment');
 
-var adapter = config[config.adapter];
-var Reader = require(dirs.gekko + adapter.path + '/reader');
-var daterange = config.backtest.daterange;
-
-var to = moment.utc(daterange.to, "YYYY-MM-DD"); //warnig deprecated fix
-var from = moment.utc(daterange.from, "YYYY-MM-DD");
-
-if(to <= from)
-  util.die('This daterange does not make sense.')
-
-if(!from.isValid())
-  util.die('invalid `from`');
-
-if(!to.isValid())
-  util.die('invalid `to`');
-
-var Market = function() {
+var Market = function(config) {
 
   _.bindAll(this);
   this.pushing = false;
   this.ended = false;
   this.closed = false;
+
+  const adapter = config[config.adapter];
+  const Reader = require(dirs.gekko + adapter.path + '/reader');
+  const daterange = config.backtest.daterange;
+
+  this.to = moment.utc(daterange.to, "YYYY-MM-DD"); //warnig deprecated fix
+  this.from = moment.utc(daterange.from, "YYYY-MM-DD");
+
+  if(this.to <= this.from)
+    util.die('This daterange does not make sense.')
+
+  if(!this.from.isValid())
+    util.die('invalid `from`');
+
+  if(!this.to.isValid())
+    util.die('invalid `to`');
+
+
 
   Readable.call(this, {objectMode: true});
 
@@ -35,11 +36,11 @@ var Market = function() {
   log.info('\tWARNING: ACT ON THESE NUMBERS AT YOUR OWN RISK!');
   log.write('');
 
-  this.reader = new Reader();
+  this.reader = new Reader(config);
   this.batchSize = config.backtest.batchSize;
   this.iterator = {
-    from: from.clone(),
-    to: from.clone().add(this.batchSize, 'm').subtract(1, 's')
+    from: this.from.clone(),
+    to: this.from.clone().add(this.batchSize, 'm').subtract(1, 's')
   }
 }
 
@@ -53,8 +54,8 @@ Market.prototype._read = _.once(function() {
 });
 
 Market.prototype.get = function() {
-  if(this.iterator.to >= to) {
-    this.iterator.to = to;
+  if(this.iterator.to >= this.to) {
+    this.iterator.to = this.to;
     this.ended = true;
   }
 
@@ -84,8 +85,8 @@ Market.prototype.processCandles = function(err, candles) {
     var d = function(ts) {
       return moment.unix(ts).utc().format('YYYY-MM-DD HH:mm:ss');
     }
-    var from = d(_.first(candles).start);
-    var to = d(_.last(candles).start);
+    const from = d(_.first(candles).start);
+    const to = d(_.last(candles).start);
     log.warn(`Simulation based on incomplete market data (${this.batchSize - amount} missing between ${from} and ${to}).`);
   }
 

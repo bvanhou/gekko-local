@@ -7,39 +7,40 @@ const moment = require('moment');
 
 const util = require('../util');
 const dirs = util.dirs();
-const config = util.getConfig();
 
 const exchangeChecker = require(dirs.core + 'exchangeChecker');
 const cp = require(dirs.core + 'cp');
 
-const adapter = config[config.adapter];
-const Reader = require(dirs.gekko + adapter.path + '/reader');
 
-const TICKINTERVAL = 20 * 1000; // 20 seconds
-
-const slug = config.watch.exchange.toLowerCase();
-const exchange = exchangeChecker.getExchangeCapabilities(slug);
-
-if(!exchange)
-  util.die(`Unsupported exchange: ${slug}`)
-
-const error = exchangeChecker.cantMonitor(config.watch);
-if(error)
-  util.die(error, true);
-
-if(config.market.from)
-  var fromTs = moment.utc(config.market.from).unix();
-else
-  var fromTs = moment().startOf('minute').unix();
-
-
-var Market = function() {
-
+var Market = function(config) {
   _.bindAll(this);
+  this.config = config;
+
+  const adapter = config[config.adapter];
+  const Reader = require(dirs.gekko + adapter.path + '/reader');
+
+  const TICKINTERVAL = 20 * 1000; // 20 seconds
+
+  const slug = config.watch.exchange.toLowerCase();
+  const exchange = exchangeChecker.getExchangeCapabilities(slug);
+
+  if(!exchange)
+    util.die(`Unsupported exchange: ${slug}`)
+
+  const error = exchangeChecker.cantMonitor(config.watch);
+  if(error)
+    util.die(error, true);
+
+  let fromTs;
+  if(config.market.from)
+    fromTs = moment.utc(config.market.from).unix();
+  else
+    fromTs = moment().startOf('minute').unix();
+
 
   Readable.call(this, {objectMode: true});
 
-  this.reader = new Reader();
+  this.reader = new Reader(config);
   this.latestTs = fromTs;
 
   setInterval(
@@ -83,6 +84,7 @@ Market.prototype.processCandles = function(err, candles) {
   // we know we are missing 57 candles...
 
   _.each(candles, function(c, i) {
+    c.asset = this.config.watch.asset;
     c.start = moment.unix(c.start).utc();
     this.push(c);
   }, this);

@@ -38,7 +38,7 @@ let iterator = {
 var DONE = false;
 
 var result = [];
-var reader = new Reader();
+var reader = new Reader(config);
 var batcher;
 var next;
 var doneFn = () => {
