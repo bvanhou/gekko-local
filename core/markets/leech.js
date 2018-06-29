@@ -85,6 +85,7 @@ Market.prototype.processCandles = function(err, candles) {
 
   _.each(candles, function(c, i) {
     c.asset = this.config.watch.asset;
+    c.currency = this.config.watch.currency;
     c.start = moment.unix(c.start).utc();
     this.push(c);
   }, this);

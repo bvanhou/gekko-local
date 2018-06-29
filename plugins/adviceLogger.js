@@ -22,7 +22,7 @@ Actor.prototype.processCandle = function(candle, done) {
 Actor.prototype.processAdvice = function(advice) {
   if (this.adviceLoggerConfig.muteSoft && advice.recommendation == 'soft') return;
   console.log()
-  log.info('We have new trading advice for: '+ this.candle.asset);
+  log.info('AdviceLogger: new trading advice for: '+ this.candle.asset + ' '+this.candle.currency);
   log.info('\t Position:', advice.recommendation);
   log.info('\t Market price:', this.price);
   log.info('\t Based on market time:', this.marketTime.format('YYYY-MM-DD HH:mm:ss'));

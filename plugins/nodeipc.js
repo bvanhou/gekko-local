@@ -20,6 +20,7 @@ var NodeIPC = function(done, pluginMeta) {
 NodeIPC.prototype.processCandle = function(candle, done) {
     this.price = candle.close;
     this.marketTime = candle.start;
+    this.candle = candle;
 
     done();
 };
@@ -28,7 +29,7 @@ NodeIPC.prototype.processAdvice = function(advice) {
 
   if (advice.recommendation!=null && this.config.nodeipc.enableProcessAdvice){
     console.log()
-    log.info('We have new trading advice for '+this.config.watch.asset + ' '+this.config.watch.currency);
+    log.info('We have new trading advice for '+this.candle.asset + ' '+this.candle.currency + ' strategy: '+this.config.tradingAdvisor.method);
     log.info('\t Position:', advice.recommendation);
     log.info('\t Market price:', this.price);
     log.info('\t Based on market time:', this.marketTime.format('YYYY-MM-DD HH:mm:ss'));
@@ -37,8 +38,9 @@ NodeIPC.prototype.processAdvice = function(advice) {
     advice.price = this.price;
     advice.marketTime = this.marketTime;
 
-    advice.currency = this.config.watch.currency;
-    advice.asset = this.config.watch.asset;
+    //TODO! here something is wrong
+    advice.currency = this.candle.currency;
+    advice.asset = this.candle.asset;
     advice.exchange = this.config.watch.exchange;
     advice.strategy = this.config.tradingAdvisor.method;
 
