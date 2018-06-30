@@ -60,7 +60,6 @@ var pluginHelper = {
   // @param Function next
   //    callback
   load: function(pluginWithConfig, next) {
-    // {plugin: plugin, config: config};
     let plugin = pluginWithConfig;
     const pluginConfig = pluginWithConfig.config[plugin.slug];
 
@@ -78,7 +77,7 @@ var pluginHelper = {
       return next();
     }
 
-    log.info('Setting up:');
+    log.info('Setting up:'+ plugin.name + ' '+ plugin.config.watch.asset);
     log.info('\t', plugin.name);
     log.info('\t', plugin.description);
 

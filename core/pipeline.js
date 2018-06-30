@@ -40,10 +40,7 @@ var pipeline = (settings) => {
   // meta information about every plugin that tells Gekko
   // something about every available plugin
   var pluginParameters = require(dirs.gekko + 'plugins');
-  const pluginParametersWithConfig = pluginParameters.map((plugin)=> {
-    plugin.config = config;
-    return plugin;
-  })
+
 
   // meta information about the events plugins can broadcast
   // and how they should hooked up to consumers.
@@ -51,18 +48,23 @@ var pipeline = (settings) => {
 
   // Instantiate each enabled plugin
   var loadPlugins = function(next) {
-    // load all plugins
-    async.mapSeries(
-      pluginParametersWithConfig,
-      pluginHelper.load,
-      function(error, _plugins) {
-        if(error)
-          return util.die(error, true);
+    const promises = pluginParameters.map((plugin)=> {
+      return new Promise((resolve) => {
+        plugin.config = config;
+        pluginHelper.load(plugin, (err, instance)=>{
+          if(err)
+            return util.die(error, true);
+          resolve(instance);
+        });
+      });
+    })
 
-        plugins = _.compact(_plugins);
-        next();
-      }
-    );
+    Promise.all(promises).then((_plugins)=> {
+      plugins = _.compact(_plugins);
+      next();
+    }).catch((error)=> {
+      log.error(error);
+    })
   };
 
   // Some plugins emit their own events, store
@@ -195,7 +197,7 @@ var pipeline = (settings) => {
         marketType = mode;
 
       var Market = require(dirs.markets + marketType);
-      
+
       var market = new Market(config);
       var gekko = new GekkoStream(candleConsumers);
 
