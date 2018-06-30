@@ -3,25 +3,27 @@ var moment = require('moment');
 var _ = require('lodash');
 var util = require('../core/util.js');
 
-var Actor = function(pluginMeta) {
+var AdviceLogger = function(pluginMeta) {
   this.price = 'N/A';
   this.marketTime = {format: function() {return 'N/A'}};
   this.config = pluginMeta.config;
   this.adviceLoggerConfig = this.config.adviceLogger;
+  this.asset = this.config.watch.asset;
 
   _.bindAll(this);
 }
 
-Actor.prototype.processCandle = function(candle, done) {
+AdviceLogger.prototype.processCandle = function(candle, done) {
   this.price = candle.close;
   this.marketTime = candle.start;
   this.candle = candle;
   done();
 };
 
-Actor.prototype.processAdvice = function(advice) {
+AdviceLogger.prototype.processAdvice = function(advice) {
   if (this.adviceLoggerConfig.muteSoft && advice.recommendation == 'soft') return;
   console.log()
+  log.info('asset: '+this.asset + ' candle.asset:'+this.candle.asset);
   log.info('AdviceLogger: new trading advice for: '+ this.candle.asset + ' '+this.candle.currency);
   log.info('\t Position:', advice.recommendation);
   log.info('\t Market price:', this.price);
@@ -29,9 +31,9 @@ Actor.prototype.processAdvice = function(advice) {
   console.log()
 };
 
-Actor.prototype.finalize = function(advice, done) {
+AdviceLogger.prototype.finalize = function(advice, done) {
   // todo
   done();
 };
 
-module.exports = Actor;
+module.exports = AdviceLogger;
