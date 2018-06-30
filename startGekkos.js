@@ -98,7 +98,7 @@ function startStrategy(strategy, watchMarket){
   // startAt = moment.unix(Math.max(optimal, available)).utc().format();
   leeach_strategy.market.from = moment.unix(optimal).utc().format();
 
-  startGekkoAsChildProcess(leeach_strategy);
+  startGekko(leeach_strategy);
 }
 
 setTimeout(startStrategies, 4000);
