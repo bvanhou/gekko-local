@@ -24,6 +24,9 @@ method.init = function() {
   this.addIndicator('uo', 'UO', this.settings);
 }
 
+method.update = function(candle) {
+  
+}
 // for debugging purposes log the last
 // calculated parameters.
 method.log = function(candle) {

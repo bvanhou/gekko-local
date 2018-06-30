@@ -3,13 +3,13 @@
 // can use please refer to this document:
 //
 // https://github.com/askmike/gekko/blob/stable/docs/trading_methods.md
-
+var log = require('../core/log.js');
 // Let's create our own method
 var method = {};
 
 // Prepare everything our method needs
 method.init = function() {
-  this.name = 'tulip-macd'
+  this.name = 'tulip-cci'
   // keep state about the current trend
   // here, on every new candle we use this
   // state object to check if we need to
@@ -20,13 +20,11 @@ method.init = function() {
   // before we can start giving advice?
   this.requiredHistory = this.tradingAdvisor.historySize;
 
-  var customMACDSettings = this.settings.parameters;
-  customMACDSettings.optInFastPeriod =  Number(customMACDSettings.optInFastPeriod);
-  customMACDSettings.optInSlowPeriod =  Number(customMACDSettings.optInSlowPeriod);
-  customMACDSettings.optInSignalPeriod =  Number(customMACDSettings.optInSignalPeriod);
+  var customSettings = this.settings.parameters;
+  customSettings.optInTimePeriod =  Number(customSettings.optInTimePeriod);
 
   // define the indicators we need
-  this.addTulipIndicator('mymacd', 'macd', customMACDSettings);
+  this.addTulipIndicator('mycci', 'cci', customSettings);
 }
 
 // What happens on every new candle?
@@ -36,7 +34,9 @@ method.update = function(candle) {
 
 
 method.log = function() {
+  var result = this.tulipIndicators.mycci.result;
   // nothing!
+
 }
 
 // Based on the newly calculated
@@ -44,14 +44,16 @@ method.log = function() {
 // update or not.
 method.check = function(candle) {
   var price = candle.close;
-  var result = this.tulipIndicators.mymacd.result;
-  var macddiff = result['macd'] - result['macdSignal'];
+  var result = this.tulipIndicators.mycci.result;
+  var cci = result['result']
 
-  if(this.settings.thresholds.down > macddiff && this.trend !== 'short') {
+  //log.debug(cci);
+
+  if(this.settings.thresholds.down > cci) { //strong short
     this.trend = 'short';
     this.advice('short');
 
-  } else if(this.settings.thresholds.up < macddiff && this.trend !== 'long'){
+  } else if(this.settings.thresholds.up < cci){ //strong long
     this.trend = 'long';
     this.advice('long');
 
