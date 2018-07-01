@@ -1,6 +1,9 @@
 interval = 14
 
+[parameters]
+optInTimePeriod = 14
+
 [thresholds]
-low = 30
-high = 70
+high = 55
+low = 47
 persistence = 1

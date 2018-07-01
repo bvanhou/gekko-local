@@ -3,6 +3,7 @@
 // can use please refer to this document:
 //
 // https://github.com/askmike/gekko/blob/stable/docs/trading_methods.md
+var log = require('../core/log.js');
 
 // Let's create our own method
 var method = {};
@@ -47,6 +48,7 @@ method.check = function(candle) {
   var result = this.tulipIndicators.mymacd.result;
   var macddiff = result['macd'] - result['macdSignal'];
 
+  log.debug('macddiff: '+macddiff + ' threshold up:'+this.settings.thresholds.up + ' down: '+this.settings.thresholds.down);
   if(this.settings.thresholds.down > macddiff && this.trend !== 'short') {
     this.trend = 'short';
     this.advice('short');

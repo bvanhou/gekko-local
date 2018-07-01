@@ -1,0 +1,16 @@
+[cci.parameters]
+optInTimePeriod = 26
+
+#best
+[cci.thresholds]
+up = 56
+down = -20
+
+[macd.parameters]
+optInFastPeriod = 18
+optInSlowPeriod = 21
+optInSignalPeriod = 10
+
+[macd.thresholds]
+down = -0.96
+up = 0.2

@@ -32,9 +32,9 @@ config.watch = {
 
 config.tradingAdvisor = {
   enabled: true,
-  method: 'MACD',
-  candleSize: 10,
-  historySize: 20,
+  method: 'RSI',
+  candleSize: 1440,
+  historySize: 30,
   stoploss : {
     enabled : false,
     procent : 10,
@@ -46,6 +46,87 @@ config.Threshold = {
   ceiling : 490,
   bottom : 470
 }
+
+config['tulip-macd-cci'] = {
+  macd : {
+    parameters : {
+      optInFastPeriod : 18,
+      optInSlowPeriod : 21,
+      optInSignalPeriod : 10
+    },
+
+    thresholds : {
+      down : -0.96,
+      up : 0.2
+    }
+  },
+
+  cci : {
+    parameters : {
+      optInTimePeriod : 20,
+      historySize : 30
+    },
+
+    thresholds : {
+      down : -20,
+      up : 70
+    }
+  }
+}
+
+config['tulip-macd-adx'] = {
+  macd : {
+    parameters : {
+      optInFastPeriod : 18,
+      optInSlowPeriod : 21,
+      optInSignalPeriod : 10
+    },
+
+    thresholds : {
+      down : -0.025,
+      up : 0.025
+    }
+  },
+
+  adx : {
+    parameters : {
+      optInTimePeriod : 20,
+      historySize : 30,
+      candleSize : 1440
+    },
+
+    thresholds : {
+      down : 20,
+      up : 25
+    }
+  }
+}
+
+config['tulip-macd'] = {
+  parameters : {
+    optInFastPeriod : 18,
+    optInSlowPeriod : 21,
+    optInSignalPeriod : 10
+  },
+
+  thresholds : {
+    down : -0.025,
+    up : 0.025
+  }
+}
+
+config['tulip-cci'] = {
+  parameters : {
+    optInTimePeriod : 20,
+  },
+
+  thresholds : {
+    down : -20,
+    up : 70
+  }
+}
+
+
 config.neuralnet_v2 = {
   threshold_buy : 1.0,
   threshold_sell : -1.0,
@@ -123,9 +204,12 @@ config.varPPO = {
 // RSI settings:
 config.RSI = {
   interval: 14,
+  parameters : {
+    optInTimePeriod: 20
+  },
   thresholds: {
     low: 30,
-    high: 70,
+    high: 55,
     // How many candle intervals should a trend persist
     // before we consider it real?
     persistence: 1
@@ -474,8 +558,8 @@ config.mongodb = {
 config.backtest = {
 //  daterange: 'scan',
  daterange: {
-   from: "2018-01-01 00:00:00",
-   to: "2018-06-18 00:00:00"
+   from: "2018-01-15 00:00:00",
+   to: "2018-06-20 00:00:00"
 },
   batchSize: 50
 }

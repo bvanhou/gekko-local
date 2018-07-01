@@ -1,0 +1,16 @@
+  [adx.parameters]
+  optInTimePeriod = 14
+  historySize = 30
+
+  [adx.thresholds]
+  up = 25
+  down = 20
+
+  [macd.parameters]
+  optInFastPeriod = 18
+  optInSlowPeriod = 21
+  optInSignalPeriod = 10
+
+  [macd.thresholds]
+  down = -0.96
+  up = 0.2

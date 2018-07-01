@@ -28,26 +28,29 @@ method.init = function() {
   this.requiredHistory = this.tradingAdvisor.historySize;
 
   // define the indicators we need
-  this.addIndicator('rsi', 'RSI', this.settings);
+  // this.addIndicator('rsi', 'RSI', this.settings);
+  this.addTulipIndicator('myrsi', 'rsi', this.settings.parameters);
+  log.info(this.settings.parameters)
 }
 
 method.update = function(candle) {
-  
+
 }
 // for debugging purposes log the last
 // calculated parameters.
 method.log = function(candle) {
   var digits = 8;
-  var rsi = this.indicators.rsi;
+  var rsi = this.tulipIndicators.myrsi;
+
 
   log.debug('calculated RSI properties for candle:');
-  log.debug('\t', 'rsi:', rsi.result.toFixed(digits));
+  log.debug('\t', 'rsi:', rsi.result.result.toFixed(digits));
   log.debug('\t', 'price:', candle.close.toFixed(digits));
 }
 
 method.check = function() {
-  var rsi = this.indicators.rsi;
-  var rsiVal = rsi.result;
+  var rsi = this.tulipIndicators.myrsi;
+  var rsiVal = rsi.result.result;
 
   if(rsiVal > this.settings.thresholds.high) {
 
@@ -69,7 +72,7 @@ method.check = function() {
 
     if(this.trend.persisted && !this.trend.adviced) {
       this.trend.adviced = true;
-      this.advice('short');
+      this.advice('long');
     } else
       this.advice();
 
@@ -93,7 +96,7 @@ method.check = function() {
 
     if(this.trend.persisted && !this.trend.adviced) {
       this.trend.adviced = true;
-      this.advice('long');
+      this.advice('short');
     } else
       this.advice();
 
