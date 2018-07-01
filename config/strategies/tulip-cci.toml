@@ -1,7 +1,7 @@
 [parameters]
-optInTimePeriod = "20..26:1"
+optInTimePeriod = 20
 #26
 #56
 [thresholds]
-up = "56..60:1"
-down = "-20..-18:1"
+up = 59
+down = -19
