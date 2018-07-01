@@ -65,25 +65,25 @@ if(mode === 'backtest') {
   // we only want to log a summarized one line report, like:
   // 2016-12-19 20:12:00: Paper trader simulated a BUY 0.000 USDT => 1.098 BTC
   Logger.prototype.handleTrade = function(trade) {
-    if(trade.action !== 'sell' && trade.action !== 'buy')
+    if(trade.action !== 'sell' && trade.action !== 'buy' && trade.action !== 'sell bear' && trade.action !== 'buy bear')
       return;
 
     var at = trade.date.format('YYYY-MM-DD HH:mm:ss');
 
 
-    if(trade.action === 'sell')
+    if(trade.action === 'sell' || trade.action === 'sell bear')
 
         log.info(
-          `${at}: Paper trader simulated a SELL`,
+          `${at}: Paper trader simulated a ${trade.action}`,
           `\t${this.round(trade.portfolio.currency)}`,
           `${this.currency} <= ${this.round(trade.portfolio.asset)}`,
           `${this.asset}`
         );
 
-    else if(trade.action === 'buy')
+    else if(trade.action === 'buy' || trade.action === 'buy bear')
 
       log.info(
-        `${at}: Paper trader simulated a BUY`,
+        `${at}: Paper trader simulated a ${trade.action}`,
         `\t${this.round(trade.portfolio.currency)}`,
         `${this.currency}\t=> ${this.round(trade.portfolio.asset)}`,
         `${this.asset}`

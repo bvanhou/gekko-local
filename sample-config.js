@@ -32,7 +32,7 @@ config.watch = {
 
 config.tradingAdvisor = {
   enabled: true,
-  method: 'RSI',
+  method: 'tulip-cci',
   candleSize: 1440,
   historySize: 30,
   stoploss : {
@@ -43,7 +43,7 @@ config.tradingAdvisor = {
 }
 
 config.Threshold = {
-  ceiling : 490,
+  ceiling : 600,
   bottom : 470
 }
 
@@ -116,13 +116,14 @@ config['tulip-macd'] = {
 }
 
 config['tulip-cci'] = {
+  bear : true,
   parameters : {
     optInTimePeriod : 20,
   },
 
   thresholds : {
-    down : -20,
-    up : 70
+    up : 59,
+    down : -19,
   }
 }
 

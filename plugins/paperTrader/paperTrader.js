@@ -20,6 +20,12 @@ const PaperTrader = function() {
     currency: calcConfig.simulationBalance.currency,
     balance: false
   }
+
+  this.roundTrip = {
+    id: 0,
+    entry: false,
+    exit: false
+  }
 }
 
 // teach our paper trader events
@@ -35,6 +41,10 @@ PaperTrader.prototype.relayTrade = function(advice) {
     action = 'sell';
   else if(what === 'long')
     action = 'buy';
+  else if(what === 'short bear')
+      action = 'buy bear';
+  else if(what === 'long bear')
+      action = 'sell bear';
   else
     return;
 
@@ -85,6 +95,33 @@ PaperTrader.prototype.updatePosition = function(advice) {
     this.portfolio.currency += this.extractFee(this.portfolio.asset * price);
     this.portfolio.asset = 0;
     this.trades++;
+  }
+
+  else if(what === 'short bear') { // buy asset as short-leverage
+    this.roundTrip.entry = {
+      price: price,
+      total: this.portfolio.currency,
+    }
+
+    this.portfolio.asset += this.extractFee(this.portfolio.currency / price);
+    this.portfolio.currency = 0;
+    this.trades++;
+
+    if (this.roundTrip.exit) {
+      this.roundTrip.id++;
+      this.roundTrip.exit = false;
+    }
+
+
+  }
+  else if(what === 'long bear') { // sell asset as short-leverage
+    this.trades++;
+
+    const diffBear = this.roundTrip.entry.total- (this.portfolio.asset * price);
+    console.log('diffBear :  ' + diffBear + ' '+this.portfolio.asset + ' '+price);
+
+    this.portfolio.currency += this.roundTrip.entry.total + this.extractFee(diffBear);
+    this.portfolio.asset = 0;
   }
 }
 

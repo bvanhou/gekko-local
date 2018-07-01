@@ -40,7 +40,8 @@ const PerformanceAnalyzer = function() {
   this.roundTrip = {
     id: 0,
     entry: false,
-    exit: false
+    exit: false,
+    action: "none"
   }
 }
 
@@ -79,7 +80,7 @@ PerformanceAnalyzer.prototype.logRoundtripPart = function(trade) {
     return;
   }
 
-  if(trade.action === 'buy') {
+  if(trade.action === 'buy' || trade.action === 'buy bear') {
     if (this.roundTrip.exit) {
       this.roundTrip.id++;
       this.roundTrip.exit = false
@@ -88,13 +89,17 @@ PerformanceAnalyzer.prototype.logRoundtripPart = function(trade) {
     this.roundTrip.entry = {
       date: trade.date,
       price: trade.price,
-      total: trade.portfolio.currency + (trade.portfolio.asset * trade.price),
+      total: trade.portfolio.currency + (trade.portfolio.asset * trade.price)
     }
-  } else if(trade.action === 'sell') {
+
+    this.roundTrip.action = trade.action;
+  } else if(trade.action === 'sell' || trade.action === 'sell bear') {
+    const amount = trade.portfolio.currency + (trade.portfolio.asset * trade.price);
+
     this.roundTrip.exit = {
       date: trade.date,
       price: trade.price,
-      total: trade.portfolio.currency + (trade.portfolio.asset * trade.price),
+      total: amount
     }
 
     this.handleRoundtrip();
@@ -141,6 +146,16 @@ PerformanceAnalyzer.prototype.handleRoundtrip = function() {
 PerformanceAnalyzer.prototype.calculateReportStatistics = function() {
   // the portfolio's balance is measured in {currency}
   let balance = this.current.currency + this.price * this.current.asset;
+  if (!this.roundTrip.exit){
+    if (this.roundTrip.action == "buy bear"){ //bear market!
+      const diffBear = this.roundTrip.entry.total - (this.price * this.current.asset);
+      console.log('diffBear final:  ' + diffBear + ' '+this.current.asset + ' '+this.price);
+
+      balance = this.current.currency + this.roundTrip.entry.total + diffBear;
+    }
+  }
+
+
   let profit = balance - this.start.balance;
 
   let timespan = moment.duration(

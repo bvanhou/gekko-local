@@ -39,15 +39,15 @@ strat.log = function() {
 strat.check = function(candle) {
   const checkPrice = candle.close;
 
-  if (checkPrice < this.bottom && !this.hasBought){
+  if (checkPrice < this.bottom && this.hasBought){
     log.debug('checkPrice: '+checkPrice + ' bottom:'+this.bottom);
-    this.advice("long");
-    this.hasBought = true;
-  }
-  if (checkPrice > this.ceiling && this.hasBought){
-    log.debug('checkPrice: '+checkPrice + ' ceiling:'+this.ceiling);
-    this.advice("short");
+    this.advice("long bear");
     this.hasBought = false;
+  }
+  if (checkPrice > this.ceiling && !this.hasBought){
+    log.debug('checkPrice: '+checkPrice + ' ceiling:'+this.ceiling);
+    this.advice("short bear");
+    this.hasBought = true;
   }
 }
 
