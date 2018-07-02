@@ -33,12 +33,12 @@ config.watch = {
 config.tradingAdvisor = {
   enabled: true,
   method: 'tulip-cci',
-  candleSize: 1440,
-  historySize: 30,
+  candleSize: 240,
+  historySize: 60,
   stoploss : {
     enabled : false,
     procent : 10,
-    trailingStep : 20
+    trailingStep : 150
   }
 }
 
@@ -103,6 +103,7 @@ config['tulip-macd-adx'] = {
 }
 
 config['tulip-macd'] = {
+
   parameters : {
     optInFastPeriod : 18,
     optInSlowPeriod : 21,
@@ -114,17 +115,75 @@ config['tulip-macd'] = {
     up : 0.025
   }
 }
-
+// optInTimePeriod: 20 for 1d
 config['tulip-cci'] = {
-  bear : true,
-  parameters : {
-    optInTimePeriod : 20,
+  cci: {
+    parameters : {
+      optInTimePeriod : 82,
+    },
+
+    thresholds : {
+      up_extreme : 200,
+      up : 68,
+      down : -20,
+    }
+  },
+  adx : {
+    parameters : {
+      optInTimePeriod : 19,
+    },
+
+    thresholds : {
+      up : 22,
+      down : 20
+    }
+  },
+  aroonosc : {
+    parameters : {
+      optInTimePeriod : 19,
+    },
+    thresholds : {
+      up : 60,
+      down : 20
+    }
+  }
+}
+
+config['tulip-cci-bear'] = {
+  cci : {
+    parameters : {
+      optInTimePeriod : 18,
+    },
+
+    thresholds : {
+      up : 20,
+      down : -78,
+    }
+  },
+  rsi : {
+    parameters : {
+      optInTimePeriod: 106
+    },
+    thresholds: {
+      up: 60,
+      down: 49,
+      // How many candle intervals should a trend persist
+      // before we consider it real?
+      persistence: 1
+    }
   },
 
-  thresholds : {
-    up : 59,
-    down : -19,
-  }
+  cciFilter : {
+    parameters : {
+      optInTimePeriod : 40,
+    },
+
+    thresholds : {
+      up : 60,
+      down : -52,
+    }
+  },
+
 }
 
 
@@ -549,6 +608,14 @@ config.mongodb = {
   }]
 }
 
+config.importer = {
+  daterange: {
+    // NOTE: these dates are in UTC
+    from: "2017-01-01 00:00:00",
+    to: "2018-06-20 00:00:00"
+  }
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                       CONFIGURING BACKTESTING
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -559,8 +626,8 @@ config.mongodb = {
 config.backtest = {
 //  daterange: 'scan',
  daterange: {
-   from: "2018-01-15 00:00:00",
-   to: "2018-06-20 00:00:00"
+   from: "2017-01-01 00:00:00",
+   to: "2018-06-10 00:00:00"
 },
   batchSize: 50
 }
@@ -569,13 +636,6 @@ config.backtest = {
 //                       CONFIGURING IMPORTING
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-config.importer = {
-  daterange: {
-    // NOTE: these dates are in UTC
-    from: "2017-11-01 00:00:00",
-    to: "2017-11-20 00:00:00"
-  }
-}
 
 // set this to true if you understand that Gekko will
 // invest according to how you configured the indicators.

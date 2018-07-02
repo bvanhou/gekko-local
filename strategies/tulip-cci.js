@@ -15,17 +15,26 @@ method.init = function() {
   // state object to check if we need to
   // report it.
   this.trend = 'none';
-  this.bear = this.settings.bear;
+  this.hasBought = false;
+  this.prevCci = 0;
 
   // how many candles do we need as a base
   // before we can start giving advice?
   this.requiredHistory = this.tradingAdvisor.historySize;
 
-  var customSettings = this.settings.parameters;
+  var customSettings = this.settings.cci.parameters;
   customSettings.optInTimePeriod =  Number(customSettings.optInTimePeriod);
 
+  var customAdxSettings = this.settings.adx.parameters;
+  customAdxSettings.optInTimePeriod =  Number(customAdxSettings.optInTimePeriod);
+
+  var customAroonSettings = this.settings.aroonosc.parameters;
+  customAroonSettings.optInTimePeriod =  Number(customAroonSettings.optInTimePeriod);
+
   // define the indicators we need
+  this.addTulipIndicator('myadx', 'adx', customAdxSettings);
   this.addTulipIndicator('mycci', 'cci', customSettings);
+  this.addTulipIndicator('myaroonosc', 'aroonosc', customAroonSettings);
 }
 
 // What happens on every new candle?
@@ -35,38 +44,32 @@ method.update = function(candle) {
 
 
 method.log = function() {
-  var result = this.tulipIndicators.mycci.result;
   // nothing!
-
 }
 
 // Based on the newly calculated
 // information, check if we should
 // update or not.
 method.check = function(candle) {
-  var price = candle.close;
-  var result = this.tulipIndicators.mycci.result;
-  var cci = result['result']
+  const price = candle.close;
+  const cci = this.tulipIndicators.mycci.result.result;
+  const adx = this.tulipIndicators.myadx.result.result;
+  const aroonosc = this.tulipIndicators.myaroonosc.result.result;
 
-  if (this.bear){ // we try at bear market
-    if((-1*this.settings.thresholds.up) > cci){ //strong short
-      this.trend = 'short';
-      this.advice('short bear');
-      log.debug ('buy bear at'+candle.close);
-    }else  if((-1*this.settings.thresholds.down) < cci) { //strong long
-      this.trend = 'long';
-      this.advice('long bear');
-      log.debug ('sell bear at'+candle.close);
-    }
-  }else{
-    if(this.settings.thresholds.up < cci){ //strong long
-      this.trend = 'long';
+  log.debug('aroonosc: ' + aroonosc +' adx: '+adx+  ' ' +this.settings.adx.thresholds.up + ' cci '+cci + ' ' +this.settings.cci.thresholds.up);
+
+  if(this.settings.cci.thresholds.up < cci && !this.hasBought
+      && adx > this.settings.adx.thresholds.up
+      && cci < this.settings.cci.thresholds.up_extreme
+      && aroonosc > this.settings.aroonosc.thresholds.up
+      ){ //strong long but not extreme!
+      this.hasBought = true;
       this.advice('long');
-    }else  if(this.settings.thresholds.down > cci) { //strong short
-      this.trend = 'short';
+    }else if(this.settings.cci.thresholds.down > cci && this.hasBought) { //strong short
+      this.hasBought = false;
       this.advice('short');
-    }
   }
+  this.prevCci = cci;
 }
 
 module.exports = method;

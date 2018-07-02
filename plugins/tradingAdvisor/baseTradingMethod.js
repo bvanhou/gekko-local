@@ -377,6 +377,7 @@ Base.prototype.stoplossCheck = function(candle) {
     if(this.stoploss.isTriggered(candle.close)) {
       //log.debug(' ----------------------------- stoploss triggered -----------------------')
       this.advice('short');
+      this.hasBought=false;
       this.stoploss.destroy();
     }else{
       this.stoploss.update(candle.close);

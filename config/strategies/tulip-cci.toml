@@ -1,7 +1,20 @@
-[parameters]
-optInTimePeriod = 20
-#26
+[adx.parameters]
+optInTimePeriod = 11
+[adx.thresholds]
+up = 22
+down = 20
+
+[aroonosc.parameters]
+optInTimePeriod = 11
+[aroonosc.thresholds]
+up = 60
+down = 20
+
+[cci.parameters]
+optInTimePeriod = 82
+#26 //day trade
 #56
-[thresholds]
-up = 59
-down = -19
+[cci.thresholds]
+up_extreme = "100..300:20"
+up = 68
+down = -20

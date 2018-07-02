@@ -1,0 +1,23 @@
+[cci.parameters]
+optInTimePeriod = 18
+
+[cci.thresholds]
+up = 20
+down = -78
+
+[cciFilter.parameters]
+optInTimePeriod = "20..110:2"
+
+[cciFilter.thresholds]
+up = 60
+down = "-60..0:1"
+
+[rsi.parameters]
+optInTimePeriod = "106"
+#36
+
+[rsi.thresholds]
+up = 60
+down = 49
+#down=55
+persistence = 1
