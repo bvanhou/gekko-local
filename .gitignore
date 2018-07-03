@@ -39,7 +39,7 @@ dwsync.xml
 *.espressostorage
 
 # Folders & files to ignore
-
+tmp
 node_modules
 candles.csv
 cexio.db
