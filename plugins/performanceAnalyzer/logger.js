@@ -62,24 +62,26 @@ Logger.prototype.logRoundtrip = function(rt) {
 
 
 if(mode === 'backtest') {
+  //Logger.prototype.handleTrade = Logger.prototype.logReport;
   // we only want to log a summarized one line report, like:
   // 2016-12-19 20:12:00: Paper trader simulated a BUY 0.000 USDT => 1.098 BTC
-  Logger.prototype.handleTrade = function(trade) {
+  Logger.prototype.handleTrade = function(trade, report) {
     if(trade.action !== 'sell' && trade.action !== 'buy' && trade.action !== 'sell bear' && trade.action !== 'buy bear')
       return;
 
     var at = trade.date.format('YYYY-MM-DD HH:mm:ss');
 
 
-    if(trade.action === 'sell' || trade.action === 'sell bear')
+    if(trade.action === 'sell' || trade.action === 'sell bear'){
 
         log.info(
           `${at}: Paper trader simulated a ${trade.action}`,
           `\t${this.round(trade.portfolio.currency)}`,
           `${this.currency} <= ${this.round(trade.portfolio.asset)}`,
-          `${this.asset}`
+          `${this.asset}`,
+          `\t${report.pnl.toFixed(2)}`
         );
-
+    }
     else if(trade.action === 'buy' || trade.action === 'buy bear')
 
       log.info(

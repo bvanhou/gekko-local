@@ -69,12 +69,13 @@ PerformanceAnalyzer.prototype.processTrade = function(trade) {
   this.current = trade.portfolio;
 
   const report = this.calculateReportStatistics();
-  this.handler.handleTrade(trade, report);
 
-  this.logRoundtripPart(trade);
+  this.logRoundtripPart(trade, report);
+
+  this.handler.handleTrade(trade, report);
 }
 
-PerformanceAnalyzer.prototype.logRoundtripPart = function(trade) {
+PerformanceAnalyzer.prototype.logRoundtripPart = function(trade, report) {
   // this is not part of a valid roundtrip
   if(!this.roundTrip.entry && trade.action === 'sell') {
     return;
@@ -102,7 +103,7 @@ PerformanceAnalyzer.prototype.logRoundtripPart = function(trade) {
       total: amount
     }
 
-    this.handleRoundtrip();
+    this.handleRoundtrip(report);
   }
 }
 
@@ -110,7 +111,7 @@ PerformanceAnalyzer.prototype.round = function(amount) {
   return amount.toFixed(8);
 }
 
-PerformanceAnalyzer.prototype.handleRoundtrip = function() {
+PerformanceAnalyzer.prototype.handleRoundtrip = function(report) {
   var roundtrip = {
     id: this.roundTrip.id,
 
@@ -128,6 +129,7 @@ PerformanceAnalyzer.prototype.handleRoundtrip = function() {
   roundtrip.pnl = roundtrip.exitBalance - roundtrip.entryBalance;
   roundtrip.profit = (100 * roundtrip.exitBalance / roundtrip.entryBalance) - 100;
 
+  report.pnl = roundtrip.pnl;
   this.roundTrips[this.roundTrip.id] = roundtrip;
 
   // this will keep resending roundtrips, that is not ideal.. what do we do about it?
@@ -146,15 +148,20 @@ PerformanceAnalyzer.prototype.handleRoundtrip = function() {
 PerformanceAnalyzer.prototype.calculateReportStatistics = function() {
   // the portfolio's balance is measured in {currency}
   let balance = this.current.currency + this.price * this.current.asset;
+  let roundtripProfit=0;
   if (!this.roundTrip.exit){
-    if (this.roundTrip.action == "buy bear"){ //bear market!
-      const diffBear = this.roundTrip.entry.total - (this.price * this.current.asset);
-      console.log('diffBear final:  ' + diffBear + ' '+this.current.asset + ' '+this.price);
+    if (this.roundTrip.action === "buy bear"){ //bear market!
+      roundtripProfit = this.roundTrip.entry.total - (this.price * this.current.asset);
+      console.log('roundtripProfit final:  ' + roundtripProfit + ' '+this.current.asset + ' '+this.price);
 
       balance = this.current.currency + this.roundTrip.entry.total + diffBear;
     }
   }
 
+  if (this.roundTrip.action === "sell"){ //normal market!
+    roundtripProfit = (this.price * this.current.asset) - this.roundTrip.entry.total;
+    console.log('roundtripProfit:  ' + roundtripProfit + ' '+this.current.asset + ' '+this.price);
+  }
 
   let profit = balance - this.start.balance;
 
@@ -175,6 +182,7 @@ PerformanceAnalyzer.prototype.calculateReportStatistics = function() {
     balance: balance,
     profit: profit,
     relativeProfit: relativeProfit,
+    roundtripProfit: roundtripProfit,
 
     yearlyProfit: this.round(profit / timespan.asYears()),
     relativeYearlyProfit: this.round(relativeProfit / timespan.asYears()),
