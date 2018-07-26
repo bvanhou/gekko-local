@@ -46,6 +46,15 @@ config.sqlite = {
   }]
 }
 
+config.mysql = {
+  path: 'plugins/mysql',
+  version: 0.1,
+  host: 'localhost',
+  database: 'cryptodb',
+  user: 'crypto',
+  password :'123456'
+}
+
   // Postgres adapter example config (please note: requires postgres >= 9.5):
 config.postgresql = {
   path: 'plugins/postgresql',
