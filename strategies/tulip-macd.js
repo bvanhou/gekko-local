@@ -46,9 +46,9 @@ method.log = function() {
 method.check = function(candle) {
   var price = candle.close;
   var result = this.tulipIndicators.mymacd.result;
-  var macddiff = result['macd'] - result['macdSignal'];
+  var macddiff = this.tulipIndicators.mymacd.result.macdHistogram;
 
-  log.debug('macddiff: '+macddiff + ' threshold up:'+this.settings.thresholds.up + ' down: '+this.settings.thresholds.down);
+  log.debug('macddiff: '+macddiff + ' macddiff2: ' + macddiff2);
   if(this.settings.thresholds.down > macddiff && this.trend !== 'short') {
     this.trend = 'short';
     this.advice('short');

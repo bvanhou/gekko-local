@@ -8,8 +8,8 @@ var Store = function(done, pluginMeta) {
   _.bindAll(this);
   this.done = done;
 
-  this.watch = pluginMeta.config.watch;
-  this.config = pluginMeta.config;
+  this.watch = pluginMeta.configGlobal.watch;
+  this.config = pluginMeta.configGlobal;
 
   this.db = sqlite.initDB(false);
   this.db.serialize(this.upsertTables);

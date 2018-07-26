@@ -4,6 +4,7 @@
 //
 // https://github.com/askmike/gekko/blob/stable/docs/trading_methods.md
 var log = require('../core/log.js');
+var helper = require('../plugins/strategieshelper.js');
 // Let's create our own method
 var method = {};
 
@@ -17,28 +18,26 @@ method.init = function() {
   this.trend = 'none';
   this.hasBought = false;
   this.prevCci = 0;
+  this.pauseDays = 0;
 
   // how many candles do we need as a base
   // before we can start giving advice?
   this.requiredHistory = this.tradingAdvisor.historySize;
 
-  var customSettings = this.settings.cci.parameters;
-  customSettings.optInTimePeriod =  Number(customSettings.optInTimePeriod);
-
-  var customAdxSettings = this.settings.adx.parameters;
-  customAdxSettings.optInTimePeriod =  Number(customAdxSettings.optInTimePeriod);
-
-  var customAroonSettings = this.settings.aroonosc.parameters;
-  customAroonSettings.optInTimePeriod =  Number(customAroonSettings.optInTimePeriod);
-
   // define the indicators we need
-  this.addTulipIndicator('myadx', 'adx', customAdxSettings);
-  this.addTulipIndicator('mycci', 'cci', customSettings);
-  this.addTulipIndicator('myaroonosc', 'aroonosc', customAroonSettings);
+  this.addTulipIndicator('mycci',     'cci', helper.prepareForTulip( this.settings.cci.parameters));
+  // filters
+  // this.addTulipIndicator('myadx',     'adx', helper.prepareForTulip( this.settings.adx.parameters));
+  // this.addTulipIndicator('myaroonosc','aroonosc', helper.prepareForTulip( this.settings.aroonosc.parameters));
+  //this.addTulipIndicator('mymacd', 'macd', customMacdSettings);
+  this.addTulipIndicator('emaLong',   'sma', helper.prepareForTulip( this.settings.smaLong.parameters));
+  this.addTulipIndicator('emaMiddle', 'sma', helper.prepareForTulip( this.settings.smaMiddle.parameters));
+  this.addTulipIndicator('emaShort',  'sma', helper.prepareForTulip( this.settings.smaShort.parameters));
 }
 
 // What happens on every new candle?
 method.update = function(candle) {
+  this.candle = candle;
   // nothing!
 }
 
@@ -51,25 +50,46 @@ method.log = function() {
 // information, check if we should
 // update or not.
 method.check = function(candle) {
-  const price = candle.close;
+
   const cci = this.tulipIndicators.mycci.result.result;
-  const adx = this.tulipIndicators.myadx.result.result;
-  const aroonosc = this.tulipIndicators.myaroonosc.result.result;
+  // const adx = this.tulipIndicators.myadx.result.result;
+  // const aroonosc = this.tulipIndicators.myaroonosc.result.result;
+  const emaLong = this.tulipIndicators.emaLong.result.result;
+  const emaMiddle = this.tulipIndicators.emaMiddle.result.result;
+  const emaShort = this.tulipIndicators.emaShort.result.result;
+  //const macd = this.tulipIndicators.mymacd.result.macdHistogram;
 
-  log.debug('aroonosc: ' + aroonosc +' adx: '+adx+  ' ' +this.settings.adx.thresholds.up + ' cci '+cci + ' ' +this.settings.cci.thresholds.up);
-
-  if(this.settings.cci.thresholds.up < cci && !this.hasBought
-      && adx > this.settings.adx.thresholds.up
+  const crossLongVar = helper.crossLong(this.prevEmaShort, this.prevEmaMiddle, emaShort, emaMiddle, candle);
+  if(!this.hasBought
+      && (
+        (cci > this.settings.cci.thresholds.up)
+        || crossLongVar
+      )
+    //  && cci > 30
       && cci < this.settings.cci.thresholds.up_extreme
-      && aroonosc > this.settings.aroonosc.thresholds.up
+      && this.prevCci < cci
+      //&& this.prevEmaLong > emaLong //worse performance
+      //&& adx > this.settings.adx.thresholds.up
+      //&& aroonosc > this.settings.aroonosc.thresholds.up
       ){ //strong long but not extreme!
+      console.log('');
+      // log.debug('macd: '+' aroonosc: ' + Number(aroonosc).toFixed(2) +' adx: '+Number(adx).toFixed(2)+  ' cci '+Number(cci).toFixed(2));
       this.hasBought = true;
+      this.crossLong = crossLongVar;
       this.advice('long');
-    }else if(this.settings.cci.thresholds.down > cci && this.hasBought) { //strong short
+    }else if(this.hasBought
+      && ( cci < this.settings.cci.thresholds.down
+         || (this.crossLong && candle.close < emaShort)
+        )
+      ) { //strong short
       this.hasBought = false;
       this.advice('short');
   }
   this.prevCci = cci;
+  this.prevEmaLong = emaLong;
+  this.prevEmaMiddle = emaMiddle;
+  this.prevEmaShort = emaShort;
+  this.prevCandle = candle;
 }
 
 module.exports = method;

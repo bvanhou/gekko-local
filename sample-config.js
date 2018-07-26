@@ -32,9 +32,9 @@ config.watch = {
 
 config.tradingAdvisor = {
   enabled: true,
-  method: 'tulip-cci',
+  method: 'STC_STOCHASTIC',
   candleSize: 240,
-  historySize: 60,
+  historySize: 30,
   stoploss : {
     enabled : false,
     procent : 10,
@@ -42,10 +42,40 @@ config.tradingAdvisor = {
   }
 }
 
-config.Threshold = {
-  ceiling : 600,
-  bottom : 470
-}
+config.STC_ZSchoro_orig = {  stc : { stcLength: 10, fastLength: 23, slowLength: 50, factor: 0.5} , threshold_high: 80, threshold_low: 20 }
+config.STC_RJPGriffin = { stc : { stcLength: 10, fastLength: 23, slowLength: 50, factor: 0.5 } , thresholds: {high: 70, low: 30} }
+config.STC_ZSchoro_mod_Griffin = { stc : {stcLength: 10, fastLength: 23, slowLength: 50, factor: 0.5 }, thresholds: {high: 70, low: 30} }
+
+
+
+config.STC_STOCHASTIC = { stc   : {TCLen: 10, MA1Len: 23, MA2Len: 50, Factor: 0.5 , thresholds: {up: 51, down: 20} },
+                          cci : {  parameters : {    optInTimePeriod : 150  },  thresholds : {  down : -70,    up : 70  }},
+
+                          smaLong200 : {    parameters : {      optInTimePeriod : 200,    }},
+                          smaMiddle80 : {  parameters : {      optInTimePeriod : 80,    }},
+                          smaMiddle60 : {  parameters : {      optInTimePeriod : 60,    }},
+                          smaMiddle40 : {  parameters : {      optInTimePeriod : 40,    }},
+                          smaShort20 : {   parameters : {      optInTimePeriod : 20,    }},
+
+                          // momentum : {   parameters : {      optInTimePeriod : 9,    }, thresholds : {  down : -20,    up : 35, buy: {down:-50}, cross_in_last_days: 3 }},
+                          // momCci:150
+                          momentum : {   parameters : {      optInTimePeriod : 6,    },
+                               thresholds : {  down : -10,    up : 35, buy: {down:-23}, cross_in_last_days: 7 }}, //down : -115,    up : 35, buy: {down:-240},
+                          roc : {   parameters : {      optInTimePeriod : 6,    },
+                                    thresholds : {  down : -10,    up : 35, buy: {down:-23}, cross_in_last_days: 7 }}, //down : -115,    up : 35, buy: {down:-240},
+                          stochasticTulip: { parameters : {optInFastKPeriod: 14, optInSlowKPeriod: 3, optInSlowDPeriod: 3},
+                                             thresholds : {up: 80, buy: { strong_down: 40, weak_down: 40} ,
+                                                                   sell: { down: 50} , cross_in_last_days: 11}},
+                        }
+
+config.multiple_timeframes = { stopBuffer : 0.015, profitRatio : 1.5, lowCross : -20, highCross : 20,
+  macd: {  long: 26,    short: 12,    signal: 9,  },
+  smaLong : {    parameters : {      optInTimePeriod : 100,    }},
+  smaMiddle : {  parameters : {      optInTimePeriod : 21,    }},
+  smaShort : {   parameters : {      optInTimePeriod : 7,    }},
+ }
+
+config.Threshold = {  ceiling : 600,  bottom : 470}
 
 config['tulip-macd-cci'] = {
   macd : {
@@ -115,22 +145,91 @@ config['tulip-macd'] = {
     up : 0.025
   }
 }
-// optInTimePeriod: 20 for 1d
-config['tulip-cci'] = {
+
+config['tulip-cci-daily'] = {
+  cci: {    parameters : {      optInTimePeriod : 20,    },
+    thresholds : {      up : 56,      down : -20,    }
+  }
+}
+
+config['tulip-cci-bear-daily'] = {
   cci: {
     parameters : {
-      optInTimePeriod : 82,
+      optInTimePeriod : 32,
     },
 
     thresholds : {
-      up_extreme : 200,
-      up : 68,
-      down : -20,
+      up : 20,
+      down : -65,
+    }
+  },
+
+  smaLong : {    parameters : {      optInTimePeriod : 100}},
+  smaMiddle : {    parameters : {      optInTimePeriod : 30}},
+  smaShort : {    parameters : {      optInTimePeriod : 7}},
+}
+
+config['tulip-cci'] = {
+  cci: {    parameters : {      optInTimePeriod : 20,    },
+    thresholds : {      up_extreme : 170,      up : 70,      down : -20,    }
+  },
+  adx : {    parameters : {      optInTimePeriod : 20,    },
+    thresholds : {      up : 22,      down : 20    }  },
+  aroonosc : {
+    parameters : {
+      optInTimePeriod : 20,
+    },
+    thresholds : {
+      up : 60,
+      down : 20
+    }
+  },
+
+  smaLong : {    parameters : {      optInTimePeriod : 100,    }},
+  smaMiddle : {    parameters : {      optInTimePeriod : 21,    }},
+  smaShort : {    parameters : {      optInTimePeriod : 7,    }},
+}
+
+// CCI Settings
+config.CCI = {
+    cci : {
+      parameters : {      optInTimePeriod : 20,    },
+      thresholds: {
+        up: 70, // fixed values for overbuy upward trajectory
+        down: -20, // fixed value for downward trajectory
+        persistence: 0, // filter spikes by adding extra filters candles
+        up_extreme: 170
+      },
+    },
+    smaLong : {    parameters : {      optInTimePeriod : 100,    }},
+    smaMiddle : {  parameters : {      optInTimePeriod : 21,    }},
+    smaShort : {   parameters : {      optInTimePeriod : 7,    }},
+};
+
+config['tulip-cci-bear'] = {
+  cci : {   parameters : {      optInTimePeriod : 20,    },
+            thresholds : {
+              up : 20,
+              down : -70,
+              down_extreme : -170,
+            }
+  },
+  smaLong : {    parameters : {      optInTimePeriod : 200,    }},
+  smaMiddle : {    parameters : {      optInTimePeriod : 15,    }},
+  smaShort : {    parameters : {      optInTimePeriod : 7,    }},
+
+  aroonosc : {
+    parameters : {
+      optInTimePeriod : 20,
+    },
+    thresholds : {
+      up : 10,
+      down : -10
     }
   },
   adx : {
     parameters : {
-      optInTimePeriod : 19,
+      optInTimePeriod : 20,
     },
 
     thresholds : {
@@ -138,54 +237,34 @@ config['tulip-cci'] = {
       down : 20
     }
   },
-  aroonosc : {
-    parameters : {
-      optInTimePeriod : 19,
-    },
-    thresholds : {
-      up : 60,
-      down : 20
-    }
-  }
 }
 
-config['tulip-cci-bear'] = {
-  cci : {
-    parameters : {
-      optInTimePeriod : 18,
-    },
+config.RSI_BULL_BEAR ={
+ SMA_long : 1000,
+ SMA_short : 50,
 
-    thresholds : {
-      up : 20,
-      down : -78,
-    }
-  },
-  rsi : {
-    parameters : {
-      optInTimePeriod: 106
-    },
-    thresholds: {
-      up: 60,
-      down: 49,
-      // How many candle intervals should a trend persist
-      // before we consider it real?
-      persistence: 1
-    }
-  },
+ BULL_RSI : 10,
+ BULL_RSI_high : 80,
+ BULL_RSI_low : 60,
 
-  cciFilter : {
-    parameters : {
-      optInTimePeriod : 40,
-    },
-
-    thresholds : {
-      up : 60,
-      down : -52,
-    }
-  },
-
+ BEAR_RSI : 15,
+ BEAR_RSI_high : 50,
+ BEAR_RSI_low : 20,
 }
 
+config.RSI_BULL_BEAR_ADX = {
+  SMA : {long : 1000,  short : 50},
+  BULL : {  rsi : 10,  high : 80,  low : 60,  mod_high : 5,  mod_low : -5},
+  BEAR : {  rsi : 15,  high : 50,  low : 20,  mod_high : 15, mod_low  : -5},
+  ADX : {  adx : 3,  high : 70,  low : 50}
+}
+
+config.TEMA = {
+short : 10,
+long : 80,
+
+SMA_long : 200
+}
 
 config.neuralnet_v2 = {
   threshold_buy : 1.0,
@@ -301,17 +380,6 @@ config.UO = {
     // before we consider it real?
     persistence: 1
   }
-};
-
-// CCI Settings
-config.CCI = {
-    constant: 0.015, // constant multiplier. 0.015 gets to around 70% fit
-    history: 90, // history size, make same or smaller than history
-    thresholds: {
-        up: 100, // fixed values for overbuy upward trajectory
-        down: -100, // fixed value for downward trajectory
-        persistence: 0 // filter spikes by adding extra filters candles
-    }
 };
 
 // StochRSI settings
@@ -627,9 +695,9 @@ config.backtest = {
 //  daterange: 'scan',
  daterange: {
    from: "2017-01-01 00:00:00",
-   to: "2018-06-10 00:00:00"
+   to: "2018-06-02 00:00:00"
 },
-  batchSize: 50
+  batchSize: 1000
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

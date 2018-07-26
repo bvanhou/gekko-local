@@ -1,23 +1,21 @@
 [cci.parameters]
-optInTimePeriod = 18
-
+optInTimePeriod = 20
+#18
 [cci.thresholds]
 up = 20
-down = -78
+down = -70
+down_extreme=-170
 
-[cciFilter.parameters]
-optInTimePeriod = "20..110:2"
+[smaLong.parameters]
+optInTimePeriod = 200
+[smaMiddle.parameters]
+optInTimePeriod = 15
+[smaShort.parameters]
+optInTimePeriod = 7
 
-[cciFilter.thresholds]
-up = 60
-down = "-60..0:1"
-
-[rsi.parameters]
-optInTimePeriod = "106"
-#36
-
-[rsi.thresholds]
-up = 60
-down = 49
-#down=55
-persistence = 1
+[aroonosc.parameters]
+optInTimePeriod = 20
+#18
+[aroonosc.thresholds]
+up = 10
+down = -10

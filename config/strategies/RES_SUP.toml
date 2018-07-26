@@ -1,0 +1,104 @@
+[stc.parameters]
+TCLen=10
+MA1Len=23
+MA2Len=50
+Factor=0.5
+[stc.thresholds]
+up=80
+down=10
+[stc.chart]
+showInExtraWindow = true
+color = "orange"
+
+[stcDaily.parameters]
+TCLen=10
+MA1Len=23
+MA2Len=50
+Factor=0.5
+candleSize=6
+[stcDaily.chart]
+showInExtraWindow = true
+
+[smaLong200.parameters]
+optInTimePeriod =200
+[smaLong200.chart]
+color = "black"
+[smaMiddle80.parameters]
+optInTimePeriod =80
+[smaMiddle80.chart]
+color = "#000080"
+[smaMiddle60.parameters]
+optInTimePeriod =60
+[smaMiddle60.chart]
+color = "#0000FF"
+[smaMiddle40.parameters]
+optInTimePeriod =40
+[smaMiddle40.chart]
+color = "#00FFFF"
+[smaMiddle20.parameters]
+optInTimePeriod =20
+[smaMiddle20.chart]
+color = "#ffe4b5"
+
+#daily SMA
+[smaMiddle20daily.parameters]
+optInTimePeriod =120
+[smaMiddle60daily.parameters]
+optInTimePeriod =360
+[smaMiddle100daily.parameters]
+optInTimePeriod =600
+[smaMiddle140daily.parameters]
+optInTimePeriod =840
+[smaMiddle180daily.parameters]
+optInTimePeriod =1080
+[smaMiddle220daily.parameters]
+optInTimePeriod =1320
+
+
+[roc.parameters]
+optInTimePeriod =6
+[roc.thresholds]
+down =-10
+up =35
+cross_in_last_days=3
+[roc.thresholds.buy]
+down=-23
+[roc.chart]
+showInExtraWindow = true
+
+
+[bbands.parameters]
+optInTimePeriod = 20
+optInNbStdDevs = 2
+[bbands.chart]
+color = "red"
+type = "bollinger"
+
+[cci.parameters]
+optInTimePeriod =20
+[cci.thresholds]
+up =70
+down =-70
+[cci.chart]
+showInExtraWindow = true
+color = "blue"
+
+[rsi.parameters]
+interval=14
+[rsi.chart]
+showInExtraWindow = true
+type = "rsi"
+
+[adx.parameters]
+ADXLength = 14
+DILength = 20
+[adx.chart]
+showInExtraWindow = true
+type = "adx"
+
+[aroonosc.parameters]
+optInTimePeriod=14
+[aroonosc.chart]
+showInExtraWindow = true
+type = "aroonosc"
+

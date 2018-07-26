@@ -4,8 +4,8 @@
   "description": "The frontend for the Gekko UI",
   "author": "Mike van Rossum <mike@mvr.me>",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --inline --hot",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --inline --hot --port 8900",
+    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules "
   },
   "devDependencies": {
     "babel-core": "^6.0.0",
@@ -16,6 +16,7 @@
     "file-loader": "^0.9.0",
     "json-loader": "^0.5.4",
     "marked": "^0.3.6",
+    "moment": "^2.20.1",
     "superagent": "^2.3.0",
     "superagent-no-cache": "uditalias/superagent-no-cache",
     "vue": "^2.0.1",

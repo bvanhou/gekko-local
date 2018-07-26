@@ -4,8 +4,8 @@
     table(v-if='roundtrips.length')
       thead
         tr
-          th Entry at (UTC)
-          th Exit at (UTC)
+          th Entry at
+          th Exit at
           th Exposure
           th Entry balance
           th Exit balance

@@ -240,6 +240,20 @@ methods.cmo = {
     }
 }
 
+methods.mom = {
+    requires: ['optInTimePeriod'],
+    create: (params) => {
+        verifyParams('mom', params);
+
+        return (data, callback) => execute(callback, {
+            indicator: tulind.indicators.mom,
+            inputs: [data.close],
+            options: [params.optInTimePeriod],
+            results: ['result'],
+        });
+    }
+}
+
 methods.cvi = {
     requires: ['optInTimePeriod'],
     create: (params) => {
@@ -983,4 +997,3 @@ methods.zlema = {
 }
 
 module.exports = methods;
-

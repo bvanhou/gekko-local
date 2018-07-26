@@ -59,11 +59,10 @@ var pluginHelper = {
   //    plugin config object
   // @param Function next
   //    callback
-  load: function(pluginWithConfig, next) {
-    let plugin = pluginWithConfig;
-    const pluginConfig = pluginWithConfig.config[plugin.slug];
+  load: function(plugin, next) {
+    plugin.config = plugin.configGlobal[plugin.slug];
 
-    if(!pluginConfig || !pluginConfig.enabled)
+    if(!plugin.config || !plugin.config.enabled)
       return next();
 
     if(!_.contains(plugin.modes, gekkoMode)) {
@@ -77,7 +76,7 @@ var pluginHelper = {
       return next();
     }
 
-    log.info('Setting up:'+ plugin.name + ' '+ plugin.config.watch.asset);
+    log.info('Setting up:'+ plugin.name + ' '+ plugin.configGlobal.watch.asset);
     log.info('\t', plugin.name);
     log.info('\t', plugin.description);
 
@@ -86,7 +85,7 @@ var pluginHelper = {
       return next(cannotLoad);
 
     if(plugin.path)
-      var Constructor = require(pluginDir + plugin.path(pluginWithConfig.config));
+      var Constructor = require(pluginDir + plugin.path(plugin.configGlobal));
     else
       var Constructor = require(pluginDir + plugin.slug);
 

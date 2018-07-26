@@ -1,0 +1,14 @@
+[cci.parameters]
+optInTimePeriod = 32
+#32
+[cci.thresholds]
+up = 20
+down = -65
+#-65
+#=48%
+
+
+[smaLong.parameters]
+optInTimePeriod = 100
+[smaMiddle.parameters]
+optInTimePeriod = 30

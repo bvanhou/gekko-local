@@ -2,7 +2,7 @@
 div
   h3 Select a dataset
   .txt--center.my2(v-if='datasetScanstate === "idle"')
-    a.w100--s.btn--primary.scan-btn(href='#', v-on:click.prevent='scan') Scan available data
+    a.w100--s.btn--blue.scan-btn(href='#', v-on:click.prevent='scan') scan available data
   .txt--center.my2(v-if='datasetScanstate === "scanning"')
     spinner
   .my2(v-if='datasetScanstate === "scanned"')
@@ -34,7 +34,9 @@ div
               label(v-bind:for='set.id') {{ fmt(set.to) }}
             td
               label(v-bind:for='set.id') {{ humanizeDuration(set.to.diff(set.from)) }}
-      a.btn--primary(href='#', v-on:click.prevent='openRange', v-if='!rangeVisible') Adjust range
+      
+      em
+        a(href='#', v-on:click.prevent='openRange', v-if='!rangeVisible') Adjust range
       template(v-if='rangeVisible')
         div
           label(for='customFrom') From:
@@ -78,7 +80,7 @@ export default {
     fmt: mom => mom.utc().format('YYYY-MM-DD HH:mm'),
     openRange: function() {
       if(this.setIndex === -1)
-        return alert('Select a dataset to adjust range');
+        return alert('select a range first');
 
       this.updateCustomRange();
 

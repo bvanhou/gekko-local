@@ -14,7 +14,7 @@ var moment = require('moment');
 var Actor = function(done, pluginMeta) {
   _.bindAll(this);
 
-  this.config = pluginMeta.config;
+  this.config = pluginMeta.configGlobal;
 
   var isLeecher = this.config.market && this. config.market.type === 'leech';
 
@@ -79,6 +79,7 @@ Actor.prototype.setupTradingMethod = function() {
 // process the 1m candles
 Actor.prototype.processCandle = function(candle, done) {
   this.batcher.write([candle]);
+  this.method.candleOneMin(candle);
   done();
 }
 

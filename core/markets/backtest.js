@@ -10,6 +10,7 @@ var Market = function(config) {
   this.pushing = false;
   this.ended = false;
   this.closed = false;
+  this.config = config;
 
   const adapter = config[config.adapter];
   const Reader = require(dirs.gekko + adapter.path + '/reader');
@@ -91,6 +92,8 @@ Market.prototype.processCandles = function(err, candles) {
   }
 
   _.each(candles, function(c, i) {
+    c.asset = this.config.watch.asset;
+    c.currency = this.config.watch.currency;
     c.start = moment.unix(c.start);
     this.push(c);
   }, this);

@@ -3,6 +3,8 @@ var fs = require('fs');
 var util = require('../../core/util');
 var dirs = util.dirs();
 var log = require(dirs.core + 'log');
+var cp = require(dirs.core + 'cp');
+const CandleBatcher = require('../../core/candleBatcher');
 
 var stoplossHelper = require ('../stoploss');
 
@@ -12,7 +14,7 @@ var startTime = util.getStartTime();
 
 var talib = require(dirs.core + 'talib');
 if(talib == null) {
-  log.warn('TALIB indicators could not be loaded, they will be unavailable.');
+  //log.warn('TALIB indicators could not be loaded, they will be unavailable.');
 }
 
 var tulind = require(dirs.core + 'tulind');
@@ -79,6 +81,9 @@ var Base = function(settings, config) {
   if(!this.update)
     this.update = function() {};
 
+  if(!this.candleOneMin) //get OneMinCandles!
+    this.candleOneMin = function() {};
+
   if(!this.end)
     this.end = function() {};
 
@@ -101,6 +106,11 @@ var Base = function(settings, config) {
 
   if(_.size(this.indicators))
     this.hasSyncIndicators = true;
+
+  if (this.candleSizeLongerPeriod){
+    this.batcherLongerPeriod = new CandleBatcher(this.candleSizeLongerPeriod);
+    this.batcherLongerPeriod.on('candle', this.updateLongerPeriod);    
+  }
 }
 
 // teach our base trading method events
@@ -147,11 +157,18 @@ Base.prototype.tick = function(candle) {
   // update all indicators
   var price = candle[this.priceValue];
   _.each(this.indicators, function(i) {
-    if(i.input === 'price')
+    if (i.candleSize === undefined){
+      if(i.input === 'price')
       i.update(price);
-    if(i.input === 'candle')
+      if(i.input === 'candle')
       i.update(candle);
+    }
   },this);
+
+  //update longer Period
+  if (this.candleSizeLongerPeriod){
+    this.batcherLongerPeriod.write([candle]);
+  }
 
   // update the trading method
   if(!this.asyncTick) {
@@ -258,6 +275,25 @@ Base.prototype.propogateTick = function(candle) {
     return this.tick(this.deferredTicks.shift())
   }
 
+  // emit for UI
+  _.each(this.indicators, (indicator, name) => {
+    if (indicator.candleSize === undefined){
+      cp.indicatorResult({
+        name,
+        date: candle.start,
+        result: indicator.result
+      });
+    }
+  })
+
+  _.each(this.tulipIndicators, (indicator, name) => {
+    cp.indicatorResult({
+      name,
+      date: candle.start,
+      result: indicator.result
+    });
+  })
+
   // are we totally finished?
   var done = this.age === this.processedTicks;
   if(done && this.finishCb)
@@ -304,19 +340,22 @@ Base.prototype.addTulipIndicator = function(name, type, parameters) {
   }
 }
 
-Base.prototype.addIndicator = function(name, type, parameters) {
+Base.prototype.addIndicator = function(name, type, parameters, candleSize) {
   if(!_.contains(allowedIndicators, type))
     util.die('I do not know the indicator ' + type);
 
   if(this.setup)
     util.die('Can only add indicators in the init method!');
 
-  return this.indicators[name] = new Indicators[type](parameters);
+  this.indicators[name] = new Indicators[type](parameters);
+  this.indicators[name].candleSize = candleSize;
+
+  return this.indicators[name];
 
   // some indicators need a price stream, others need full candles
 }
 
-Base.prototype.advice = function(newPosition, _candle) {
+Base.prototype.advice = function(newPosition, _candle, adviceProps) {
   // ignore soft advice coming from legacy
   // strategies.
   if(!newPosition)
@@ -337,7 +376,8 @@ Base.prototype.advice = function(newPosition, _candle) {
   this.emit('advice', {
     recommendation: newPosition,
     portfolio: 1,
-    candle
+    candle,
+    adviceProps : adviceProps
   });
 
   if (this.stoploss){
@@ -383,6 +423,30 @@ Base.prototype.stoplossCheck = function(candle) {
       this.stoploss.update(candle.close);
     }
   }
+}
+
+Base.prototype.updateLongerPeriod = function(candle) {
+  // update all indicators with longer Period
+  var price = candle[this.priceValue];
+
+  _.each(this.indicators, (indicator, name) => {
+    if (indicator.candleSize === this.candleSizeLongerPeriod){
+      if(indicator.input === 'price')
+      indicator.update(price);
+      if(indicator.input === 'candle')
+      indicator.update(candle);
+      // emit for UI
+
+      cp.indicatorResult({
+        name,
+        date: candle.start,
+        result: indicator.result
+      });
+
+    }
+  },this);  
+
+  this.methodUpdateLongerPeriod(candle);
 }
 
 

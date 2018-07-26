@@ -50,7 +50,7 @@ var pipeline = (settings) => {
   var loadPlugins = function(next) {
     const promises = pluginParameters.map((plugin)=> {
       return new Promise((resolve) => {
-        plugin.config = config;
+        plugin.configGlobal = config;
         pluginHelper.load(plugin, (err, instance)=>{
           if(err)
             return util.die(error, true);

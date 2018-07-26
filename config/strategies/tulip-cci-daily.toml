@@ -1,0 +1,5 @@
+[cci.parameters]
+optInTimePeriod = 20
+[cci.thresholds]
+up = 56
+down = -20

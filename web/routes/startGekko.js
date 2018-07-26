@@ -83,10 +83,7 @@ module.exports = function *() {
       });
     }
 
-    if(event && event.log)
-      return logger.write(event.log);
-
-    if(!event || !event.type)
+    if(!event)
       return;
 
     if(event.type === 'trade') {
@@ -115,9 +112,12 @@ module.exports = function *() {
       }
       broadcast(wsEvent);
       return;
+    } else if(event.log) {
+      logger.write(event.log);
     }
 
     let updates = {};
+
 
     if(event.type === 'update') {
       updates.latest = event.latest;
