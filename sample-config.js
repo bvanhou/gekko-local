@@ -32,8 +32,8 @@ config.watch = {
 
 config.tradingAdvisor = {
   enabled: true,
-  method: 'STC_STOCHASTIC',
-  candleSize: 240,
+  method: 'tulip-cci-daily',
+  candleSize: 1440,
   historySize: 30,
   stoploss : {
     enabled : false,
@@ -50,6 +50,7 @@ config.STC_ZSchoro_mod_Griffin = { stc : {stcLength: 10, fastLength: 23, slowLen
 
 config.STC_STOCHASTIC = { stc   : {TCLen: 10, MA1Len: 23, MA2Len: 50, Factor: 0.5 , thresholds: {up: 51, down: 20} },
                           cci : {  parameters : {    optInTimePeriod : 150  },  thresholds : {  down : -70,    up : 70  }},
+                          bbands : {  parameters : {    optInTimePeriod : 20, optInNbStdDevs:2  },  thresholds : {  down : -70,    up : 70  }},
 
                           smaLong200 : {    parameters : {      optInTimePeriod : 200,    }},
                           smaMiddle80 : {  parameters : {      optInTimePeriod : 80,    }},
@@ -57,12 +58,8 @@ config.STC_STOCHASTIC = { stc   : {TCLen: 10, MA1Len: 23, MA2Len: 50, Factor: 0.
                           smaMiddle40 : {  parameters : {      optInTimePeriod : 40,    }},
                           smaShort20 : {   parameters : {      optInTimePeriod : 20,    }},
 
-                          // momentum : {   parameters : {      optInTimePeriod : 9,    }, thresholds : {  down : -20,    up : 35, buy: {down:-50}, cross_in_last_days: 3 }},
-                          // momCci:150
-                          momentum : {   parameters : {      optInTimePeriod : 6,    },
-                               thresholds : {  down : -10,    up : 35, buy: {down:-23}, cross_in_last_days: 7 }}, //down : -115,    up : 35, buy: {down:-240},
                           roc : {   parameters : {      optInTimePeriod : 6,    },
-                                    thresholds : {  down : -10,    up : 35, buy: {down:-23}, cross_in_last_days: 7 }}, //down : -115,    up : 35, buy: {down:-240},
+                               thresholds : {  down : -10,    up : 35, buy: {down:-23}, cross_in_last_days: 3 }}, //down : -115,    up : 35, buy: {down:-240},
                           stochasticTulip: { parameters : {optInFastKPeriod: 14, optInSlowKPeriod: 3, optInSlowDPeriod: 3},
                                              thresholds : {up: 80, buy: { strong_down: 40, weak_down: 40} ,
                                                                    sell: { down: 50} , cross_in_last_days: 11}},
@@ -685,6 +682,8 @@ config.mysql = {
   password :'123456'
 }
 
+
+
 config.importer = {
   daterange: {
     // NOTE: these dates are in UTC
@@ -701,11 +700,11 @@ config.importer = {
 // @link: https://gekko.wizb.it/docs/commandline/backtesting.html
 
 config.backtest = {
-//  daterange: 'scan',
- daterange: {
+ daterange: 'scan',
+/* daterange: {
    from: "2017-01-01 00:00:00",
    to: "2018-06-02 00:00:00"
-},
+},*/
   batchSize: 1000
 }
 

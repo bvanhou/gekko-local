@@ -1,5 +1,4 @@
 var _ = require('lodash');
-var fs = require('fs');
 var mysql = require('mysql');
 
 var util = require('../../core/util.js');

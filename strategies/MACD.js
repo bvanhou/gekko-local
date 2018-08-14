@@ -44,7 +44,7 @@ method.update = function(candle) {
 // EMAs and diff.
 method.log = function() {
   var digits = 8;
-  var macd = this.indicators.macd;
+  var macd = this.indicators.macd.result;
 
   var diff = macd.diff;
   var signal = macd.signal.result;

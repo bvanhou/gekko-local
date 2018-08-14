@@ -68,14 +68,20 @@ PerformanceAnalyzer.prototype.processTrade = function(trade) {
   this.trades++;
   this.current = trade.portfolio;
 
-  const report = this.calculateReportStatistics();
-
-  this.logRoundtripPart(trade, report);
-
-  this.handler.handleTrade(trade, report);
+  this.logRoundtripPart(trade);
+  
+  let roundtripProfit = 0;
+  if (trade.action.includes('sell')){
+    roundtripProfit = this.roundTrips[this.roundTrip.id].pnl;
+    if (trade.adviceProps){
+      trade.adviceProps.roundtripProfit = roundtripProfit;
+    }
+  }
+  
+  this.handler.handleTrade(trade, roundtripProfit);
 }
 
-PerformanceAnalyzer.prototype.logRoundtripPart = function(trade, report) {
+PerformanceAnalyzer.prototype.logRoundtripPart = function(trade) {
   // this is not part of a valid roundtrip
   if(!this.roundTrip.entry && trade.action === 'sell') {
     return;
@@ -103,7 +109,8 @@ PerformanceAnalyzer.prototype.logRoundtripPart = function(trade, report) {
       total: amount
     }
 
-    this.handleRoundtrip(report);
+    this.roundTrip.action = trade.action;
+    this.handleRoundtrip();
   }
 }
 
@@ -111,7 +118,7 @@ PerformanceAnalyzer.prototype.round = function(amount) {
   return amount.toFixed(8);
 }
 
-PerformanceAnalyzer.prototype.handleRoundtrip = function(report) {
+PerformanceAnalyzer.prototype.handleRoundtrip = function() {
   var roundtrip = {
     id: this.roundTrip.id,
 
@@ -128,11 +135,10 @@ PerformanceAnalyzer.prototype.handleRoundtrip = function(report) {
 
   roundtrip.pnl = roundtrip.exitBalance - roundtrip.entryBalance;
   roundtrip.profit = (100 * roundtrip.exitBalance / roundtrip.entryBalance) - 100;
-
-  report.pnl = roundtrip.pnl;
+  
   this.roundTrips[this.roundTrip.id] = roundtrip;
 
-  // this will keep resending roundtrips, that is not ideal.. what do we do about it?
+  // send roundrip to logger 
   this.handler.handleRoundtrip(roundtrip);
 
   // we need a cache for sharpe
@@ -149,12 +155,13 @@ PerformanceAnalyzer.prototype.calculateReportStatistics = function() {
   // the portfolio's balance is measured in {currency}
   let balance = this.current.currency + this.price * this.current.asset;
   let roundtripProfit=0;
-  if (!this.roundTrip.exit){
+
+  if (!this.roundTrip.exit){ // calculate last entry if no closing (sell found)
     if (this.roundTrip.action === "buy bear"){ //bear market!
       roundtripProfit = this.roundTrip.entry.total - (this.price * this.current.asset);
-      console.log('roundtripProfit final:  ' + roundtripProfit + ' '+this.current.asset + ' '+this.price);
-
-      balance = this.current.currency + this.roundTrip.entry.total + diffBear;
+      console.log('roundtripProfit final:  ' + this.roundTrip.entry.total.toFixed(2)+' ' + roundtripProfit.toFixed(2) + ' '+this.current.asset + ' '+this.price);
+  
+      balance = this.current.currency + this.roundTrip.entry.total + roundtripProfit;
     }
   }
 

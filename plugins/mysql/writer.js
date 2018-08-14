@@ -1,24 +1,38 @@
 var _ = require('lodash');
-var config = require('../../core/util.js').getConfig();
-var mysql = require('mysql');
-
-var handle = require('./handle');
-var myUtil = require('./util');
+var handle = require('./handle'); //TODO make as Object
+var log = require('../../core/log');
 
 var Store = function(done, pluginMeta) {
   _.bindAll(this);
   this.done = done;
-
+  
+  this.watch = pluginMeta.configGlobal.watch;
+  this.config = pluginMeta.configGlobal;
+  
   this.db = handle;
   this.upsertTables();
 
   this.cache = [];
+
+  if (this.config.watch.tickrate)
+    var TICKRATE = this.config.watch.tickrate;
+  else if(this.config.watch.exchange === 'okcoin')
+    var TICKRATE = 2;
+  else
+    var TICKRATE = 20;
+
+  this.tickrate = TICKRATE;
+}
+
+Store.prototype.table = function(name){
+  var name = this.watch.exchange + '_' + name;
+  return [name, this.watch.currency, this.watch.asset].join('_');
 }
 
 Store.prototype.upsertTables = function() {
   var createQueries = [
     `CREATE TABLE IF NOT EXISTS
-    ${myUtil.table('candles')} (
+    ${this.table('candles')} (
       id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
       start INT UNSIGNED UNIQUE,
       open DOUBLE NOT NULL,
@@ -38,15 +52,21 @@ Store.prototype.upsertTables = function() {
   }, this);
 }
 
+let synchronize = false; // for synchronizing if setTimeout also wants to write
 Store.prototype.writeCandles = function() {
+  if (synchronize)
+    return;
+
   if(_.isEmpty(this.cache)){
     return;
   }
 
+  synchronize = true;
+
   _.each(this.cache, candle => {
     let c = candle;
     let q = `
-      INSERT INTO ${myUtil.table('candles')}
+      INSERT INTO ${this.table('candles')}
       (start, open, high,low, close, vwp, volume, trades)
       values(${c.start.unix()}, ${c.open}, ${c.high}, ${c.low}, ${c.close}, ${c.vwp}, ${c.volume}, ${c.trades}) ON DUPLICATE KEY UPDATE start = start;
     `;
@@ -58,25 +78,37 @@ Store.prototype.writeCandles = function() {
   });
 
   this.cache = [];
+  synchronize = false;
 }
 
-var processCandle = function(candle, done) {
+Store.prototype.processCandle = function(candle, done) {
+  if(!this.config.candleWriter.enabled){
+    done();    return;
+  }
+
+  if(_.isEmpty(this.cache)){
+    //log.debug('start timer: '+new Date())
+    setTimeout(()=> { log.debug('start writing: ' + this.cache.length);
+                      this.writeCandles();    }, this.tickrate*1000);
+  }
+
   this.cache.push(candle);
-  if (this.cache.length > 100) 
+  if (this.cache.length > 1000){
     this.writeCandles();
+  } 
 
   done();
 };
 
-var finalize = function(done) {
+Store.prototype.finalize = function(done) {
+  if(!this.config.candleWriter.enabled){
+    done();
+    return;
+  }
+
   this.writeCandles();
   this.db = null;
   done();
-}
-
-if(config.candleWriter.enabled) {
-  Store.prototype.processCandle = processCandle;
-  Store.prototype.finalize = finalize;
 }
 
 module.exports = Store;

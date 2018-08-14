@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 var semver = require("semver");
 var _ = require('lodash');
 
@@ -5,7 +6,7 @@ var _ = require('lodash');
 // prevent further loading or out outside this module
 try {
     var tulind = require("tulind");
-} catch (e) {
+} catch (e) {    
     module.exports = null;
     return;
 }

@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -33,7 +34,7 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
     var parseDate = d3.timeParse("%d-%b-%y");
 
     var zoom = d3.zoom()
-            .scaleExtent([1, 10])
+            .scaleExtent([1, 20])
             .on("zoom", zoomed);
 
     d3.selectAll("g").on("scroll", null);
@@ -61,8 +62,8 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
             .yScale(y)
             .y(function(d) {
                 // Display the buy and sell arrows a bit above and below the price, so the price is still visible
-                if(d.type === 'buy') return y(d.low)+5;
-                if(d.type === 'sell') return y(d.high)-5;
+                if(d.type.includes('buy')) return y(d.low)+5;
+                if(d.type.includes('sell')) return y(d.high)-5;
                 else return y(d.price);
             })
             .on("mouseenter", enter)
@@ -97,6 +98,10 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
             result.lowerBand = !isNaN(+val.result.bbandsLower) ? +val.result.bbandsLower : null;
             result.middleBand = !isNaN(+val.result.bbandsMiddle) ? +val.result.bbandsMiddle : null;
             result.upperBand = !isNaN(+val.result.bbandsUpper) ? +val.result.bbandsUpper : null;
+          }if (configChart && configChart.type === "macd"){ 
+             result.difference = +val.result.diff;
+             result.macd = +val.result.macd;
+             result.signal = +val.result.signal;
           }if (configChart && configChart.type === "rsi"){ 
              result.middle = 50;
              result.overbought = 70;
@@ -449,11 +454,11 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
     let trades = _trades.map( t => {
         let trade = _.pick(t, ['price']);
         trade.quantity = 1;
-        trade.type = t.action;
+        trade.type = t.action.includes('buy') ? 'buy' : 'sell';
         trade.date = moment.utc(t.date).add(-adjustCandles, 'hours').toDate(); 
-        trade.high = trade.price ;
+        trade.high = trade.price;
         trade.low = trade.price;
-        trade.adviceProps = t.adviceProps;
+        trade.adviceProps = t.adviceProps;  
         return trade;
     });
 
@@ -471,16 +476,18 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
     indicatorsExtraPlot.forEach(indicator => {
       svg.append('g')
         .attr("class", "crosshair "+indicator.name);
-        // if (indicator.config && indicator.config.type === "rsi" ){
-        //         var rsiData = techan.indicator.rsi()(data);
-        //         //rsiScale.domain(techan.scale.plot.rsi(rsiData).domain());
-        //         console.log(rsiData);
-        //         console.log(indicatorData[indicator.name]);
+        if (indicator.config && indicator.config.type === "macd" ){
+                var rsiData = techan.indicator.macd()(data);
+                //rsiScale.domain(techan.scale.plot.rsi(rsiData).domain());
+                console.log(rsiData);
+                console.log(indicatorData[indicator.name]);
+                svg.select("g."+ indicator.name+" .indicator-plot").datum(indicatorData[indicator.name]).call(indicator.plot);
+                svg.select("g.crosshair."+indicator.name).call(indicator.crosshair).call(zoom);
 
-        // }else {
+        }else {
           svg.select("g."+ indicator.name+" .indicator-plot").datum(indicatorData[indicator.name]).call(indicator.plot);
           svg.select("g.crosshair."+indicator.name).call(indicator.crosshair).call(zoom);
-        // }
+        }
     })
 
     svg.select("g.tradearrow").datum(trades).call(tradearrow);
@@ -592,18 +599,23 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
             plotName = type;
         }else if (type && type === "rsi"){
             plotName = type;
+        }else if (type && type === "macd"){
+            plotName = type;
         }
         return plotName;
     }
 
     function enter(d) {
         valueText.style("display", "inline");
-        const valueEntries = Object.entries(d.adviceProps);
         let text = "";
-        valueEntries.forEach(v => {
-          if (v[0]!== "date" && v[0]!== "type")
-            text += v[0] + ": "+ohlcAnnotation.format()(v[1]) + " ";
-        })
+        if (d.adviceProps){
+                const valueEntries = Object.entries(d.adviceProps);
+                
+                valueEntries.forEach(v => {
+                        if (v[0]!== "date" && v[0]!== "type")
+                        text += v[0] + ": "+ohlcAnnotation.format()(v[1]) + " ";
+                })
+        }
         valueText.text("Trade: " + moment(d.date).format('YYYY-MM-DD HH:mm') + ", " + d.type + ", " +ohlcAnnotation.format()(d.price) + " "+ text);
     }
 

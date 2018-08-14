@@ -20,7 +20,9 @@ Relay.prototype.handleTrade = function(trade, report) {
   cp.trade(trade);
   cp.report(report);
 
-  this.logHandleTrade(trade, report);
+  if (this.logHandleTrade){
+    this.logHandleTrade(trade, report);
+  }
 }
 
 Relay.prototype.handleRoundtrip = function(rt) {
@@ -37,7 +39,7 @@ if(mode === 'backtest') {
   //Relay.prototype.handleTrade = Relay.prototype.logReport;
   // we only want to log a summarized one line report, like:
   // 2016-12-19 20:12:00: Paper trader simulated a BUY 0.000 USDT => 1.098 BTC
-  Relay.prototype.logHandleTrade = function(trade, report) {
+  Relay.prototype.logHandleTrade = function(trade, roundtripProfit) {
     if(trade.action !== 'sell' && trade.action !== 'buy' && trade.action !== 'sell bear' && trade.action !== 'buy bear')
       return;
 
@@ -51,7 +53,7 @@ if(mode === 'backtest') {
           `\t${trade.portfolio.currency.toFixed(2)}`,
           `${this.currency} <= ${trade.portfolio.asset.toFixed(2)}`,
           `${this.asset}`,
-          `\t${report.pnl.toFixed(2)}`
+          `\t${roundtripProfit.toFixed(2)}`
         );
     }
     else if(trade.action === 'buy' || trade.action === 'buy bear')

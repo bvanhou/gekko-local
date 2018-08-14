@@ -38,22 +38,37 @@ color = "#00FFFF"
 [smaMiddle20.parameters]
 optInTimePeriod =20
 [smaMiddle20.chart]
-color = "#ffe4b5"
+color = "orange"
 
 #daily SMA
 [smaMiddle20daily.parameters]
 optInTimePeriod =120
+[smaMiddle20daily.chart]
+color = "black"
 [smaMiddle60daily.parameters]
 optInTimePeriod =360
+[smaMiddle60daily.chart]
+color = "blue"
 [smaMiddle100daily.parameters]
 optInTimePeriod =600
+[smaMiddle100daily.chart]
+color = "red"
 [smaMiddle140daily.parameters]
 optInTimePeriod =840
+[smaMiddle140daily.chart]
+color = "orange"
 [smaMiddle180daily.parameters]
 optInTimePeriod =1080
+[smaMiddle180daily.chart]
+color = "red"
 [smaMiddle220daily.parameters]
 optInTimePeriod =1320
-
+[smaMiddle220daily.chart]
+color = "blue"
+[smaMiddle260daily.parameters]
+optInTimePeriod =1560
+[smaMiddle260daily.chart]
+color = "black"
 
 [roc.parameters]
 optInTimePeriod =6
@@ -102,3 +117,16 @@ optInTimePeriod=14
 showInExtraWindow = true
 type = "aroonosc"
 
+[macd.parameters]
+short=20
+long=60
+signal=14
+[macd.chart]
+showInExtraWindow = true
+type = "macd"
+
+[res_sup]
+nearSmaProcent = 2
+breakSmaProcent = 3
+breakSmaBullMarket = 140
+breakSmaBearMarket = 140 

@@ -1,20 +1,21 @@
 // required indicators
 var EMA = require('./EMA.js');
+var SMA = require('./SMA.js');
 
 var Indicator = function(config) {
-  this.input = 'price';
+  this.input = 'candle';
   this.diff = false;
   this.short = new EMA(config.short);
   this.long = new EMA(config.long);
   this.signal = new EMA(config.signal);
 }
 
-Indicator.prototype.update = function(price) {
-  this.short.update(price);
-  this.long.update(price);
+Indicator.prototype.update = function(candle) {
+  this.short.update(candle.close);
+  this.long.update(candle.close);
   this.calculateEMAdiff();
   this.signal.update(this.diff);
-  this.result = this.diff - this.signal.result;
+  this.result = { macd: this.diff - this.signal.result, signal: this.signal.result, diff: this.diff, short: this.short, long: this.long } ;
 }
 
 Indicator.prototype.calculateEMAdiff = function() {

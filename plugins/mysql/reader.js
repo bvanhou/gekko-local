@@ -1,14 +1,21 @@
 var _ = require('lodash');
 var util = require('../../core/util.js');
-var config = util.getConfig();
-var log = require(util.dirs().core + 'log');
+var log = require('../../core/log');
 
 var handle = require('./handle');
-var myUtil = require('./util');
 
-var Reader = function() {
+var Reader = function(config) {
   _.bindAll(this);
   this.db = handle;
+
+  this.watch = config.watch;
+  this.config = config;
+}
+
+
+Reader.prototype.table = function(name){
+  var name = this.watch.exchange + '_' + name;
+  return [name, this.watch.currency, this.watch.asset].join('_');
 }
 
 // returns the furtherst point (up to `from`) in time we have valid data from
@@ -19,7 +26,7 @@ Reader.prototype.mostRecentWindow = function(from, to, next) {
   var maxAmount = to - from + 1;
 
   var query = this.db.query(`
-  SELECT start from ${myUtil.table('candles')}
+  SELECT start from ${this.table('candles')}
   WHERE start <= ${to} AND start >= ${from}
   ORDER BY start DESC
   `, function (err, result) {
@@ -87,8 +94,8 @@ Reader.prototype.tableExists = function (name, next) {
   this.db.query(`
     SELECT table_name
     FROM information_schema.tables
-    WHERE table_schema='${myUtil.database}'
-      AND table_name='${myUtil.table(name)}';
+    WHERE table_schema='${this.config.mysql.database}'
+      AND table_name='${this.table(name)}';
   `, function(err, result) {
     if (err) {
       return util.die('DB error at `tableExists`');
@@ -103,11 +110,14 @@ Reader.prototype.get = function(from, to, what, next) {
     what = '*';
   }
 
-  var query = this.db.query(`
-  SELECT ${what} from ${myUtil.table('candles')}
+  const queryStr = `
+  SELECT ${what} from ${this.table('candles')}
   WHERE start <= ${to} AND start >= ${from}
   ORDER BY start ASC
-  `);
+  `;
+
+  // console.log(queryStr);
+  var query = this.db.query(queryStr);
 
   var rows = [];
   query.on('result', function(row) {
@@ -121,7 +131,7 @@ Reader.prototype.get = function(from, to, what, next) {
 
 Reader.prototype.count = function(from, to, next) {
   var query = this.db.query(`
-  SELECT COUNT(*) as count from ${myUtil.table('candles')}
+  SELECT COUNT(*) as count from ${this.table('candles')}
   WHERE start <= ${to} AND start >= ${from}
   `);
   var rows = [];
@@ -136,7 +146,7 @@ Reader.prototype.count = function(from, to, next) {
 
 Reader.prototype.countTotal = function(next) {
   var query = this.db.query(`
-  SELECT COUNT(*) as count from ${myUtil.table('candles')}
+  SELECT COUNT(*) as count from ${this.table('candles')}
   `);
   var rows = [];
   query.on('result', function(row) {
@@ -152,12 +162,12 @@ Reader.prototype.getBoundry = function(next) {
   var query = this.db.query(`
   SELECT (
     SELECT start
-    FROM ${myUtil.table('candles')}
+    FROM ${this.table('candles')}
     ORDER BY start LIMIT 1
   ) as first,
   (
     SELECT start
-    FROM ${myUtil.table('candles')}
+    FROM ${this.table('candles')}
     ORDER BY start DESC
     LIMIT 1
   ) as last
@@ -173,7 +183,7 @@ Reader.prototype.getBoundry = function(next) {
 }
 
 Reader.prototype.close = function() {
-  this.db.end();
+   this.db.end();
 }
 
 module.exports = Reader;
