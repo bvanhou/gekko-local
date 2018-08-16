@@ -3,11 +3,30 @@
 
 // see https://github.com/askmike/gekko/blob/stable/docs/installing_gekko_on_a_server.md
 
+/*
+const CONFIG = {
+  headless: false,
+  api: {
+    host: 'gekko.eusorov.webfactional.com',
+    port: 23745,
+    path: '/'
+  },
+  ui: {
+    ssl: false,
+    host: 'gekko.eusorov.webfactional.com',
+    port: 23745,
+    path: '/'
+  },
+  adapter: 'mysql'
+}
+*/
+
 const CONFIG = {
   headless: false,
   api: {
     host: '127.0.0.1',
     port: 3000,
+    path: '/'
   },
   ui: {
     ssl: false,
@@ -17,6 +36,7 @@ const CONFIG = {
   },
   adapter: 'mysql'
 }
+
 
 if(typeof window === 'undefined')
   module.exports = CONFIG;
