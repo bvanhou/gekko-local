@@ -13,7 +13,7 @@ const ws = require('ws');
 const app = koa();
 
 const WebSocketServer = require('ws').Server;
-const wss = new WebSocketServer({ port: config.api.port });
+const wss = new WebSocketServer({ server : server });
 
 const cache = require('./state/cache');
 const ListManager = require('./state/listManager');
