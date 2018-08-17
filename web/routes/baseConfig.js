@@ -28,6 +28,14 @@ config.trader = {
   orderUpdateDelay: 1 // Number of minutes to adjust unfilled order prices
 }
 
+config.nodeipc = {
+  enabled: true,
+  serverpath: '/tmp/tradingbot.myipcserver',
+  connectionid: 'tradingbot',
+  enableProcessCandle: false,
+  enableProcessAdvice: true
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //                       CONFIGURING ADAPTER
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 // simple POST request that returns the candles requested
 
 // expects a config like:
@@ -28,7 +29,7 @@
 // }
 
 const _ = require('lodash');
-const promisify = require('tiny-promisify');
+const {promisify} = require('util');
 const candleLoader = promisify(require('../../core/workers/loadCandles/parent'));
 const base = require('./baseConfig');
 

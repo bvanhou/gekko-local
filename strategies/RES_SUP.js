@@ -51,12 +51,13 @@ method.init = function() {
   // 24h =  1440; 1440/240 = 6
   let factor = 1440 / this.tradingAdvisor.candleSize;
   
+  //TODO evtl. 140 +-10!
   this.smaDailies = [20,60,100,140,180,220,260]; //
   this.smaDailies.forEach(v => {
     this.addIndicator('smaMiddle'+v+'daily', 'EMA_ENVELOPE', {optInTimePeriod : (20 * factor ), offset: (140-v)/1 });
   });
 
-  this.settings.aroonosc.parameters.optInTimePeriod = 14 * factor/6;
+  this.settings.aroonosc.parameters.optInTimePeriod = 14 * factor/6; //aroonsc alwyas as 4h
   this.addTulipIndicator('aroonosc', 'aroonosc', this.settings.aroonosc.parameters);
 }
 

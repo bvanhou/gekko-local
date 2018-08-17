@@ -18,4 +18,9 @@ if(config.ssl) {
 }
 
 
+if (config.port === 3000){
+  // in development
+  var wsPath = `ws://${config.host}:${config.port}${config.path}api/`;
+}
+
 export {wsPath,restPath};

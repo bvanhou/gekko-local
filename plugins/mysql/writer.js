@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 var _ = require('lodash');
 var handle = require('./handle'); //TODO make as Object
 var log = require('../../core/log');
@@ -13,21 +15,19 @@ var Store = function(done, pluginMeta) {
   this.upsertTables();
 
   this.cache = [];
-
+  
+  let TICKRATE = 20;
   if (this.config.watch.tickrate)
-    var TICKRATE = this.config.watch.tickrate;
+    TICKRATE = this.config.watch.tickrate;
   else if(this.config.watch.exchange === 'okcoin')
-    var TICKRATE = 2;
-  else
-    var TICKRATE = 20;
+    TICKRATE = 2;
 
   this.tickrate = TICKRATE;
-}
+};
 
 Store.prototype.table = function(name){
-  var name = this.watch.exchange + '_' + name;
-  return [name, this.watch.currency, this.watch.asset].join('_');
-}
+  return [this.watch.exchange, name, this.watch.currency, this.watch.asset].join('_');
+};
 
 Store.prototype.upsertTables = function() {
   var createQueries = [
@@ -63,32 +63,26 @@ Store.prototype.writeCandles = function() {
 
   synchronize = true;
 
-  _.each(this.cache, candle => {
-    let c = candle;
-    let q = `
-      INSERT INTO ${this.table('candles')}
-      (start, open, high,low, close, vwp, volume, trades)
-      values(${c.start.unix()}, ${c.open}, ${c.high}, ${c.low}, ${c.close}, ${c.vwp}, ${c.volume}, ${c.trades}) ON DUPLICATE KEY UPDATE start = start;
-    `;
-    this.db.query(q, err => {
-      if(err) {
-        log.debug("Error while inserting candle: " + err);
-      }
-    });
+  var q = `INSERT INTO ${this.table('candles')} (start, open, high,low, close, vwp, volume, trades) VALUES ? ON DUPLICATE KEY UPDATE start = start`;
+  let candleArrays = this.cache.map((c) => [c.start.unix(), c.open, c.high, c.low, c.close, c.vwp, c.volume, c.trades]);
+  
+  log.debug('start writing: ' + this.cache.length);
+  this.db.query(q, [candleArrays],  err => {
+    if (err) log.debug("Error while inserting candle: " + err);
+    
+    this.cache = [];
+    synchronize = false;
+    log.debug('end writing: ' + this.cache.length);
   });
-
-  this.cache = [];
-  synchronize = false;
-}
+};
 
 Store.prototype.processCandle = function(candle, done) {
   if(!this.config.candleWriter.enabled){
     done();    return;
   }
-
+  
   if(_.isEmpty(this.cache)){
-    //log.debug('start timer: '+new Date())
-    setTimeout(()=> { log.debug('start writing: ' + this.cache.length);
+    setTimeout(()=> { log.debug('start timer');
                       this.writeCandles();    }, this.tickrate*1000);
   }
 

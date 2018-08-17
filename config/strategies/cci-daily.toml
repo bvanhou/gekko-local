@@ -1,0 +1,8 @@
+[cci.parameters]
+optInTimePeriod = 20
+[cci.thresholds]
+up = 56
+down = -20
+[cci.chart]
+showInExtraWindow = true
+color = "orange"

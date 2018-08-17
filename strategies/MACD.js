@@ -32,6 +32,8 @@ method.init = function() {
 
   // define the indicators we need
   this.addIndicator('macd', 'MACD', this.settings);
+
+  this.hasBought = false;
 }
 
 // what happens on every new candle?
@@ -47,18 +49,26 @@ method.log = function() {
   var macd = this.indicators.macd.result;
 
   var diff = macd.diff;
-  var signal = macd.signal.result;
+  var signal = macd.signal;
 
   log.debug('calculated MACD properties for candle: '+this.candle.asset);
   log.debug('\t', 'short:', macd.short.result.toFixed(digits));
   log.debug('\t', 'long:', macd.long.result.toFixed(digits));
   log.debug('\t', 'macd:', diff.toFixed(digits));
   log.debug('\t', 'signal:', signal.toFixed(digits));
-  log.debug('\t', 'macdiff:', macd.result.toFixed(digits));
+  log.debug('\t', 'macdiff:', macd.macd.toFixed(digits));
 }
 
-method.check = function() {
+method.check = function(candle) {
   var macddiff = this.indicators.macd.result;
+
+  // if (!this.hasBought){
+  //   this.advice('short bear', candle);
+  //   this.hasBought = true;
+  // }else{
+  //   this.advice('long bear', candle);
+  //   this.hasBought = false;
+  // }
 
   if(macddiff > this.settings.thresholds.up) {
 

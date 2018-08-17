@@ -8,7 +8,10 @@ import moment from 'moment';
 export default function(_data, _trades, _indicatorResults, _height, _config) {
 
   // get chart config from current strategy/method
-    var configIndicators = (_config[_config.tradingAdvisor.method]) || {};
+    var configIndicators = {}
+    if (_config && _config.tradingAdvisor){
+        configIndicators = (_config[_config.tradingAdvisor.method]) || {};
+    }
 
     let MAX_WIDTH = window.innerWidth;
     const countindicatorsExtraPlot = Object.entries(configIndicators)
@@ -450,11 +453,14 @@ export default function(_data, _trades, _indicatorResults, _height, _config) {
     yPercent.domain(techan.scale.plot.percent(y, accessor(data[indicatorPreRoll])).domain());
     yVolume.domain(techan.scale.plot.volume(data).domain());
     
-    const adjustCandles = _config.tradingAdvisor.candleSize/60; //match candles dates to trades!
+    let adjustCandles = 0;
+    if (_config && _config.tradingAdvisor){
+        adjustCandles = _config.tradingAdvisor.candleSize/60; //match candles dates to trades!
+    }
     let trades = _trades.map( t => {
         let trade = _.pick(t, ['price']);
         trade.quantity = 1;
-        trade.type = t.action.includes('buy') ? 'buy' : 'sell';
+        trade.type = t.action; // .includes('buy') ? 'buy' : 'sell';
         trade.date = moment.utc(t.date).add(-adjustCandles, 'hours').toDate(); 
         trade.high = trade.price;
         trade.low = trade.price;

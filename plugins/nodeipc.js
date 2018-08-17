@@ -7,7 +7,7 @@ require('dotenv').config();
 var NodeIPC = function(done, pluginMeta) {
 
     this.done = done;
-    this.config = pluginMeta.config;
+    this.config = pluginMeta.configGlobal;
 
     this.price = 'N/A';
     this.marketTime = {format: function() {return 'N/A'}};

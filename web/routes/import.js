@@ -1,5 +1,6 @@
+/*jshint esversion: 6 */
 const _ = require('lodash');
-const promisify = require('tiny-promisify');
+const {promisify} = require('util');
 const pipelineRunner = promisify(require('../../core/workers/pipeline/parent'));
 
 const cache = require('../state/cache');

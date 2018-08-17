@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 const _ = require('lodash');
 const moment = require('moment');
 
@@ -90,7 +91,7 @@ PerformanceAnalyzer.prototype.logRoundtripPart = function(trade) {
   if(trade.action === 'buy' || trade.action === 'buy bear') {
     if (this.roundTrip.exit) {
       this.roundTrip.id++;
-      this.roundTrip.exit = false
+      this.roundTrip.exit = false;
     }
 
     this.roundTrip.entry = {

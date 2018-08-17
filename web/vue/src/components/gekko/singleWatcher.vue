@@ -8,6 +8,8 @@
       .grd.contain
         h3 Market
         .grd-row
+          a(v-on:click='stopGekko', class='w100--s my1 btn--red') Stop Gekko
+        .grd-row
           .grd-row-col-2-6 Exchange
           .grd-row-col-4-6 {{ data.watch.exchange }}
         .grd-row
@@ -144,7 +146,23 @@ export default {
           return c;
         });
       })
-    }
+    },
+    stopGekko: function() {
+      if(this.hasLeechers) {
+        return alert('This Gekko is fetching market data for multiple stratrunners, stop these first.');
+      }
+
+      if(!confirm('Are you sure you want to stop this Gekko?')) {
+        return;
+      }
+
+      post('killGekko', { id: this.data.id }, (err, res) => {
+        if (err) alert(err);
+
+        console.log('stopped gekko');
+      });
+
+    },      
   }
 }
 </script>

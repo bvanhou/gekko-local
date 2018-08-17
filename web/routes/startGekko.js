@@ -1,13 +1,15 @@
+/*jshint esversion: 6 */
 const _ = require('lodash');
-const promisify = require('tiny-promisify');
+const {promisify} = require('util');
 const moment = require('moment');
 
-const pipelineRunner = promisify(require('../../core/workers/pipeline/parent'));
+const pipelineRunner = require('../../core/workers/pipeline/parent');
 const cache = require('../state/cache');
 const Logger = require('../state/logger');
 const broadcast = cache.get('broadcast');
 const apiKeyManager= cache.get('apiKeyManager');
 const gekkoManager = cache.get('gekkos');
+const gekkoProcessManager = cache.get('gekkoprocesses');
 
 const base = require('./baseConfig');
 
@@ -168,12 +170,15 @@ module.exports = function *() {
       gekko.trader = 'paper trader';
   }
 
-  gekkoManager.add(gekko);
-
+   gekkoManager.add(gekko);
+  
   broadcast({
     type: 'new_gekko',
     gekko
   });
+  
+  child.id = gekko.id;
+  gekkoProcessManager.add(child);
 
   this.body = gekko;
 }

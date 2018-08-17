@@ -4,8 +4,10 @@
       h1 Unknown Strat runner
       p Gekko doesn't know what strat runner this is...
     div(v-if='data')
-      h2.contain Strat runner
+      h2.contain Strat runner id : {{ data.id }} 
       .grd.contain
+        .grd-row
+          a(v-on:click='stopGekko', class='w100--s my1 btn--red') Stop Gekko
         .grd-row
           .grd-row-col-3-6
             h3 Market
@@ -209,7 +211,23 @@ export default {
           return c;
         });
       })
-    }
+    },
+  stopGekko: function() {
+      if(this.hasLeechers) {
+        return alert('This Gekko is fetching market data for multiple stratrunners, stop these first.');
+      }
+
+      if(!confirm('Are you sure you want to stop this Gekko?')) {
+        return;
+      }
+
+      post('killGekko', { id: this.data.id }, (err, res) => {
+        if (err) alert(err);
+
+        console.log('stopped gekko');
+      });
+
+    },    
   }
 }
 </script>

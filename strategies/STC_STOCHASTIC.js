@@ -1,168 +1,237 @@
+/*jshint esversion: 6 */
+
 // helpers
 var _ = require('lodash');
 var log = require('../core/log.js');
 var helper = require('../plugins/strategieshelper.js');
-var Math = require('mathjs');
-var CCI = require('./indicators/CCI.js');
 
 // let's create our own method
 var method = {};
 
 // prepare everything our method needs
-method.init = function() {
-  this.currentTrend;
+method.init = function () {
   this.requiredHistory = this.tradingAdvisor.historySize;
 
-  this.age = 0;
-  this.trend = {
-    direction: 'undefined',
-    duration: 0,
-    persisted: false,
-    adviced: false
-  };
+  this.hasBoughtBull = false;
+  this.hasBoughtBear = false;
+  this.bearMarket = false;
+  this.prevValues = [];
+  this.breakSmaProcent = 5;
 
-  this.hasBought = false;
+  // always calculate daily sma 
+  // 24h =  1440; 1440/240 = 6
+  let factor = 1440 / this.tradingAdvisor.candleSize;
+
   this.crossedStochPersistent = 0;
-  this.shortCrossBBPersistent = 0;
+  this.shortCrossSma20Persistent = 0;
   this.prevCandle = {};
 
   // define the indicators we need
-  this.addIndicator('stc', 'STC_Rob', this.settings.stc);
+  this.addIndicator('smaShort20', 'SMA', this.settings.smaShort20.parameters.optInTimePeriod * factor);
+  this.addIndicator('smaLong200', 'SMA', this.settings.smaLong200.parameters.optInTimePeriod * factor);
+  // this.addIndicator('smaMiddle80', 'SMA', this.settings.smaMiddle80.parameters.optInTimePeriod*factor);
+  // this.addIndicator('smaMiddle60', 'SMA', this.settings.smaMiddle60.parameters.optInTimePeriod*factor);
+  // this.addIndicator('smaMiddle40', 'SMA', this.settings.smaMiddle40.parameters.optInTimePeriod*factor);
 
+  this.addIndicator('stc', 'STC', this.settings.stc.parameters);
+  this.addIndicator('roc', 'ROC', this.settings.roc.parameters.optInTimePeriod);
   this.addTulipIndicator('stochasticTulip', 'stoch', this.settings.stochasticTulip.parameters);
-  this.addTulipIndicator('bbands', 'bbands', this.settings.bbands.parameters);
-
-  this.addIndicator('smaLong200',   'SMA', this.settings.smaLong200.parameters.optInTimePeriod);
-  this.addIndicator('smaMiddle80', 'SMA', this.settings.smaMiddle80.parameters.optInTimePeriod);
-  this.addIndicator('smaMiddle60', 'SMA', this.settings.smaMiddle60.parameters.optInTimePeriod);
-  this.addIndicator('smaMiddle40', 'SMA', this.settings.smaMiddle40.parameters.optInTimePeriod);
-  //this.addIndicator('smaShort20',  'SMA', this.settings.smaShort20.parameters.optInTimePeriod);
-  this.addIndicator('roc',  'ROC', this.settings.roc.parameters.optInTimePeriod);
-
-  //this.addIndicator('cci',   'CCI', this.settings.cci.parameters);
-}
+};
 
 // what happens on every new candle?
-method.update = function(candle) {
+method.update = function (candle) {
 
 }
 
 // for debugging purposes: log the last calculated
 // EMAs and diff.
-method.log = function(candle) {
+method.log = function (candle) {
 }
 
-method.check = function(candle) {
+method.check = function (candle) {
   this.stc = this.indicators.stc.result;
   this.stochasticTulip = this.tulipIndicators.stochasticTulip.result; //'stochK', 'stochD'
   this.roc = this.indicators.roc.result;
-
+  this.smaShort20 = this.indicators.smaShort20.result;
   this.smaLong200 = this.indicators.smaLong200.result;
-  this.smaMiddle40 = this.indicators.smaMiddle40.result;
-  this.smaMiddle60 = this.indicators.smaMiddle60.result;
-  this.smaMiddle80 = this.indicators.smaMiddle80.result;
-  this.smaShort20 = this.tulipIndicators.bbands.result.middleBand;
 
-  if (this.crossedStochPersistent > 0 && this.crossedStochPersistent < this.settings.stochasticTulip.thresholds.cross_in_last_days){
-    this.crossedStochPersistent++;
-  }else{
-    this.crossedStochPersistent = 0; // cross is too old:
+  let currentValue = {};
+  currentValue.candle = candle;
+
+  let indicatorNames = Object.keys(this.indicators);
+  indicatorNames.forEach((name) => currentValue[name] = this.indicators[name].result);
+
+  indicatorNames = Object.keys(this.tulipIndicators);
+  indicatorNames.forEach((name) => currentValue[name] = this.tulipIndicators[name].result.result);
+
+  this.prevValue = this.prevValues[this.prevValues.length-1];
+  this.currentValue = currentValue;
+
+  this.prevValues.push(currentValue);
+  
+  if (this.prevValues.length > 10) {
+    this.prevValues.shift();
   }
 
-  if (this.crossedShortPersistent>0 && this.crossedShortPersistent < this.settings.stochasticTulip.thresholds.cross_in_last_days){
-    this.crossedShortPersistent++;
-  }else
-    this.crossedShortPersistent = 0; // cross is too old:
-
-  if (this.shortCrossBBPersistent>0 && this.shortCrossBBPersistent <=this.settings.roc.thresholds.cross_in_last_days){
-    this.shortCrossBBPersistent++;
-  }else
-    this.shortCrossBBPersistent = 0; // cross is too old:
-
-  const crossed = helper.crossLong(this.prevStochK,this.prevStochD, this.stochasticTulip.stochK, this.stochasticTulip.stochD)
-  if (!this.hasBought
+  //stochastic cross at down thresholds
+  if (!this.hasBoughtBull
     // && this.prevsmaMiddle40 < this.smaMiddle40 // 1. ema/sma should rise
-    && crossed // 2. Stochastics crossed at oversold levels in the past 10 days!
+    // 2. Stochastics crossed at oversold levels in the past 10 days!
+    && helper.crossLong(this.prevStochK, this.prevStochD, this.stochasticTulip.stochK, this.stochasticTulip.stochD)
     && this.stochasticTulip.stochK <= this.settings.stochasticTulip.thresholds.buy.strong_down
     && this.stochasticTulip.stochD <= this.settings.stochasticTulip.thresholds.buy.strong_down
-  ){
-    this.crossedStochPersistent = 1;
-    //log.debug ('crossedStochPersistent: !' + ' '+this.crossedStochPersistent)
+  ) {
+    this.crossedStochPersistentBull = 1;
   }
 
-
-  const shortCross = helper.crossShort(this.prevStochK,this.prevStochD, this.stochasticTulip.stochK, this.stochasticTulip.stochD)
-  if (//this.hasBought
-    shortCross
-    && this.stochasticTulip.stochK >= this.settings.stochasticTulip.thresholds.buy.weak_down
-    //&& this.stc < this.prevStc
-  ){
-    this.crossedShortPersistent = 1;
-  //  this.crossedStochPersistent = 0; //cancel when in the middle cross  stc changed direction
-  //  log.debug ('crossedShortPersistent CANCEL!' + ' '+this.crossedShortPersistent)
+  if (!this.hasBoughtBear 
+    // 2. Stochastics crossed at overbought levels in the past 10 days!
+    && helper.crossShort(this.prevStochK, this.prevStochD, this.stochasticTulip.stochK, this.stochasticTulip.stochD)
+    && this.stochasticTulip.stochK >= this.settings.stochasticTulip.thresholds.up
+    && this.stochasticTulip.stochD >= this.settings.stochasticTulip.thresholds.up
+  ) {
+    this.crossedStochPersistentBear = 1;
   }
 
-  // const shortCrossWithSTC = this.crossedShortPersistent > 0 && this.crossedShortPersistent < 5
-  //                           && this.stc <= this.settings.stc.thresholds.down
+  // breakSmaWithMomentum(2, candle, this.prevCandle, this.prevsmaShort20, this.smaShort20, this.roc);
 
   // Break through the BB-Middle (SMA 20) with high momentum within 3 days
-  const shortCrossBB = helper.crossShort(this.prevCandle.close,this.prevsmaShort20, candle.close, this.smaShort20)
-  if (shortCrossBB){
-    this.shortCrossBBPersistent = 1;
-    //log.debug ('shortCrossBBPersistent: ' + ' '+this.shortCrossBBPersistent)
+  // const shortCrossBB = helper.crossShort(this.prevCandle.close,this.prevsmaShort20, candle.close, this.smaShort20);
+  // if (shortCrossBB){
+  //   this.shortCrossSma20Persistent = 1;
+  // }
+
+  this.breakSma = 0;
+  if ((!this.bearMarket && this.hasBoughtBull) || (this.bearMarket && this.hasBoughtBear)) {
+    const smaDaily = this.smaShort20;
+    if (breakSmaFn(this.breakSmaProcent, currentValue.candle, smaDaily, this.bearMarket,
+       !this.bearMarket && this.prevValues.slice(-10).some((prevValue)=>prevValue.candle.close > smaDaily)
+       || 
+       this.bearMarket && this.prevValues.slice(-10).some((prevValue)=>prevValue.candle.close < smaDaily)
+      )) {
+      this.breakSma = true;
+    }
   }
 
-  const cutMiddleWithMomentum = (this.shortCrossBBPersistent > 0 && this.shortCrossBBPersistent <= this.settings.roc.thresholds.cross_in_last_days
-                            && (this.roc <= this.settings.roc.thresholds.down))
+  this.bearMarket = candle.close < this.smaLong200 ? true: false;
 
-  log.debug (candle.start.format('YYYY-MM-DD HH:mm') + ' stc: '+this.stc.toFixed(2) + ' '   + ' BBPersistent:'+this.shortCrossBBPersistent + ' StochPersistent: '+this.crossedStochPersistent+ ' roc: '+(this.roc? this.roc.toFixed(2):'') );
-  //log.debug('\t'+(this.prevStochK? this.prevStochK.toFixed(2):'')+' '+(this.prevStochD? this.prevStochD.toFixed(2):' ')+ ' '+ this.stochasticTulip.stochK.toFixed(2)+ ' '+ this.stochasticTulip.stochD.toFixed(2));
+  //check if crosses are too old
+  this.crossedStochPersistentBull = isCrossOld(this.crossedStochPersistentBull, this.settings.stochasticTulip.thresholds.cross_in_last_days);
+  this.crossedStochPersistentBear = isCrossOld(this.crossedStochPersistentBear, this.settings.stochasticTulip.thresholds.cross_in_last_days);
+  // this.shortCrossSma20Persistent = isCrossOld(this.shortCrossSma20Persistent, this.settings.smaShort20.thresholds.cross_in_last_days);
 
-  if (!this.hasBought
-    //&& this.prevsmaLong200 < this.smaLong200 // 1. ema/sma should rise
-    && (this.crossedStochPersistent >0 && this.crossedStochPersistent <= this.settings.stochasticTulip.thresholds.cross_in_last_days// 2. Stochastics crossed at oversold levels in the past x days!
-    && this.stc >= this.settings.stc.thresholds.down // 3. STC left oversold level and is above +10 or thresholds.up
-    && this.prevStc <= this.settings.stc.thresholds.down // or < this.stc
-  //  && candle.close > this.smaMiddle80 // avoid false singals, but this lowers performance
-  // || this.roc <= this.settings.momentum.thresholds.buy.down
-  )
-  ){
-    this.hasBought = true;
-    this.advice('long');
-    this.crossedStochPersistent = 0;
-    this.shortCrossBBPersistent = 0;
-    this.stop = this.prevCandle.open < this.candle.close ? Math.min(this.prevCandle.open, this.candle.open *0.9) : this.candle.close   // stoploss max 10%
-  }else if (this.hasBought
-    && (cutMiddleWithMomentum
-    //&& this.stochasticTulip.stochK <= this.settings.stochasticTulip.thresholds.up
-    //&& this.stochasticTulip.stochD <= this.settings.stochasticTulip.thresholds.up //too late! cci is faster
-    //&& this.prevStochK >= this.settings.stochasticTulip.thresholds.up
-    //&& this.prevStochD >= this.settings.stochasticTulip.thresholds.up
-    //&& candle.close < this.smaLong200
-    //&& this.cci < this.settings.cci.thresholds.down
-    //&& this.prevCci > this.cci
-    //&& this.crossedShortPersistent>0
-    //&& this.stc <= this.settings.stc.thresholds.up
-    //&& this.prevStc >= this.settings.stc.thresholds.up
-    || (candle.close < this.stop && this.roc > this.settings.roc.thresholds.buy.down)
-  //  || (candle.close < this.smaMiddle40 && candle.close < this.smaMiddle60 && this.roc > this.settings.momentum.thresholds.buy.down) // sell if both lines hit, but this lowers performance
-    )
-  ){
-    this.hasBought = false;
-    this.advice('short');
-    this.crossedStochPersistent = 0;
-    this.shortCrossBBPersistent = 0;
+  //log.debug (candle.start.format('YYYY-MM-DD HH:mm') + ' stc: '+this.stc.toFixed(2) + ' '   + ' BBPersistent:'+this.shortCrossSma20Persistent + ' StochPersistent: '+this.crossedStochPersistent+ ' roc: '+(this.roc? this.roc.toFixed(2):'') );
+
+  // isTrend: isTrend
+  let buyadviceProp = {
+    crossedStochPersistentBull: this.crossedStochPersistentBull,
+    crossedStochPersistentBear: this.crossedStochPersistentBear,
+    stc: this.stc,
+    prevStc: this.prevStc, 
+    stc_thresholds_up: this.settings.stc.thresholds.up,
+    stc_thresholds_down: this.settings.stc.thresholds.down,
+    bearMarket: this.bearMarket
+  };
+  let selladviceProp = {
+    breakSma: this.breakSma,
+    roc: this.roc, roc_thresholds_down: this.settings.roc.thresholds.down,
+    bearMarket: this.bearMarket
+  };
+
+  // buy bull trend
+  if (this.hasBoughtBull || !this.bearMarket) {
+    this.bullTrendStrat(candle, buyadviceProp, selladviceProp);
   }
-
+  // buy bear trend
+  if (this.hasBoughtBear || this.bearMarket){
+    this.bearTrendStrat(candle, buyadviceProp, selladviceProp);
+  }
 
   //this.prevsmaLong200 = this.smaLong200;
   this.prevsmaShort20 = this.smaShort20;
   this.prevStc = this.stc;
   this.prevCci = this.cci;
-  this.prevsmaMiddle40 = this.smaMiddle40;
   this.prevStochK = this.stochasticTulip.stochK;
   this.prevStochD = this.stochasticTulip.stochD;
   this.prevCandle = candle;
+};
 
+method.bullTrendStrat = function (candle, buyadviceProp, selladviceProp) {
+  if (!this.hasBoughtBull &&
+    ( buyadviceProp.crossedStochPersistentBull > 0 &&      // 2. Stochastics crossed at oversold levels in the past x days!
+      buyadviceProp.stc >= buyadviceProp.stc_thresholds_down &&// 3. STC left oversold level and is above +10 or thresholds.up
+      buyadviceProp.prevStc <= buyadviceProp.stc_thresholds_down // 
+      && candle.close > this.smaShort20 
+      // || this.roc <= this.settings.momentum.thresholds.buy.down
+    )
+  ) {
+    this.hasBoughtBull = true;
+    this.advice('long', candle, buyadviceProp);
+    this.crossedStochPersistentBull = 0;
+    this.prevValues = this.prevValues.slice(-1);
+    this.stop = this.prevCandle.open < this.candle.close ? Math.min(this.prevCandle.open, this.candle.open * 0.9) : this.candle.close*0.9;   // stoploss max 10%
+    //this.stop = this.candle.close * 0.9;   // stoploss max 10%
+  } else if (this.hasBoughtBull &&
+    (selladviceProp.breakSma  
+      // && selladviceProp.roc <= selladviceProp.roc_thresholds_down
+      || (candle.close < this.stop)
+    )
+  ) {
+    this.hasBoughtBull = false;
+    this.advice('short', candle, selladviceProp);
+    this.crossedStochPersistentBull = 0;
+  }
+};
+
+method.bearTrendStrat = function (candle, buyadviceProp, selladviceProp) {
+  if (!this.hasBoughtBear &&
+    (buyadviceProp.crossedStochPersistentBear > 0 &&      // 2. Stochastics crossed at overbought levels in the past x days!
+      buyadviceProp.stc <= buyadviceProp.stc_thresholds_up &&// 3. STC left overbought level and is above +10 or thresholds.up
+      buyadviceProp.prevStc <= buyadviceProp.stc_thresholds_up // 
+      && candle.close < this.smaShort20 
+    )
+  ) {
+    this.hasBoughtBear = true;
+    this.advice('short bear', candle, buyadviceProp);
+    this.crossedStochPersistentBear = 0;
+    this.shortCrossSma20Persistent = 0;
+    this.prevValues = this.prevValues.slice(-1);
+    //this.stop = this.prevCandle.open < this.candle.close ? Math.min(this.prevCandle.open, this.candle.open * 0.9) : this.candle.close;   // stoploss max 10%
+    this.stop = this.candle.close * 1.1;   // stoploss max 10%
+  } else if (this.hasBoughtBear &&
+    (selladviceProp.breakSma  
+      // && selladviceProp.roc <= selladviceProp.roc_thresholds_down
+      || (candle.close > this.stop)
+    )
+  ) {
+    this.hasBoughtBear = false;
+    this.advice('long bear', candle, selladviceProp);
+
+    this.crossedStochPersistentBear = 0;
+    this.shortCrossSma20Persistent = 0;
+  }
+};
+
+function isCrossOld(cross, maxAge) {
+  if (cross > 0 && cross < maxAge) {
+    cross++;
+  } else {
+    cross = 0; // cross is too old, reset.
+  }
+
+  return cross;
+}
+
+function breakSmaFn (procent, candle, sma, bearMarket, shouldCheck){
+  let breakSma = false;
+  if (!shouldCheck)  return false;
+  
+  //if (bearMarket) console.log('bearMarket breakSMA shouldCheck');
+  if ((!bearMarket && candle.close * (1+(procent+0)*0.01) < sma) || (bearMarket && candle.close * (1-(procent+0)*0.01) > sma)){ 
+    breakSma = true;
+    //if (bearMarket) console.log('bearMarket breakSMA');
+  }
+
+  return breakSma;
 }
 module.exports = method;

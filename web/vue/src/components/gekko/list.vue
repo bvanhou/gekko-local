@@ -31,6 +31,7 @@
     table.full(v-if='stratrunners.length')
       thead
         tr
+          th id
           th exchange
           th currency
           th asset
@@ -40,6 +41,7 @@
           th profit
       tbody
         tr.clickable(v-for='gekko in stratrunners', v-on:click='$router.push({path: `live-gekkos/stratrunner/${gekko.id}`})')
+          td {{ gekko.id }}
           td {{ gekko.watch.exchange }}
           td {{ gekko.watch.currency }}
           td {{ gekko.watch.asset }}

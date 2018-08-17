@@ -1,10 +1,10 @@
-[stc]
+[stc.parameters]
 TCLen=10
 MA1Len=23
 MA2Len=50
 Factor=0.5
 [stc.thresholds]
-up=51
+up=80
 down=20
 [stc.chart]
 showInCandlestick = false
@@ -27,10 +27,13 @@ color = "#6495ed"
 optInTimePeriod =40
 [smaMiddle40.chart]
 color = "#4169e1"
+
 [smaShort20.parameters]
 optInTimePeriod =20
+[smaShort20.thresholds]
+cross_in_last_days=3
 [smaShort20.chart]
-color = "#ffe4b5"
+color = "blue"
 
 [roc.parameters]
 optInTimePeriod =6
@@ -53,7 +56,6 @@ up=80
 cross_in_last_days=11
 [stochasticTulip.thresholds.buy]
 strong_down=20
-weak_down=40
 [stochasticTulip.thresholds.sell]
 down=50
 [stochasticTulip.chart]

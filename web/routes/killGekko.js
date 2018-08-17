@@ -1,11 +1,10 @@
+/*jshint esversion: 6 */
 const _ = require('lodash');
-const promisify = require('tiny-promisify');
-const moment = require('moment');
 
-const pipelineRunner = promisify(require('../../core/workers/pipeline/parent'));
 const cache = require('../state/cache');
 const broadcast = cache.get('broadcast');
 const gekkoManager = cache.get('gekkos');
+const gekkoProcessManager = cache.get('gekkoprocesses');
 
 const base = require('./baseConfig');
 
@@ -22,6 +21,12 @@ module.exports = function *() {
     return;
   }
 
+  var gekkoprocess = gekkoProcessManager.list().find((child) => child.id === id);
+  
+  gekkoprocess.disconnect(); //works!
+  //gekko.kill(); kill not a function, dont know why!
+  gekkoProcessManager.delete(id);
+  
   let deleted = gekkoManager.delete(id);
 
   if(!deleted){

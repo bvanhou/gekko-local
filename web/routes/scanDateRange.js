@@ -1,5 +1,6 @@
+/*jshint esversion: 6 */
 const _ = require('lodash');
-const promisify = require('promisify-node');
+const {promisify} = require('util');
 
 const scan = promisify(require('../../core/workers/dateRangeScan/parent'));
 

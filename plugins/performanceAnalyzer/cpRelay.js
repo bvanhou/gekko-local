@@ -20,13 +20,12 @@ Relay.prototype.handleTrade = function(trade, report) {
   cp.trade(trade);
   cp.report(report);
 
-  if (this.logHandleTrade){
-    this.logHandleTrade(trade, report);
-  }
+  this.logHandleTrade(trade, report);
 }
 
 Relay.prototype.handleRoundtrip = function(rt) {
   cp.roundtrip(rt);
+
   this.logHandleRoundtrip();
 }
 
@@ -70,6 +69,11 @@ if(mode === 'backtest') {
     this.roundtrips.push(rt);
   }
 
+}else{
+  Relay.prototype.logHandleTrade = function() {
+  }
+  Relay.prototype.logHandleRoundtrip = function() {
+  }
 }
 
 
