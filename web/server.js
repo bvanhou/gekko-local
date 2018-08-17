@@ -34,6 +34,7 @@ cache.set('broadcast', broadcast);
 cache.set('imports', new ListManager);
 cache.set('gekkos', new ListManager);
 cache.set('apiKeyManager', require('./apiKeyManager'));
+cache.set('gekkoprocesses', new ListManager);
 
 // setup API routes
 
