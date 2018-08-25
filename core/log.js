@@ -39,12 +39,13 @@ const winstonLogger = winston.createLogger({
     }),
 
     // send only errors to Sentry (good library for errors fixing)
-    /*
+
     new SentryTransport({
       token : process.env.SENTRY_DSN,
       level: 'error'
     }),
-
+    
+    /*
     new LogzTransport({
       token: process.env.LOGZ_KEY,
       host: 'listener.logz.io',
