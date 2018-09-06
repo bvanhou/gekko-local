@@ -60,7 +60,7 @@ method.log = function() {
 }
 
 method.check = function(candle) {
-  var macddiff = this.indicators.macd.result;
+  var macddiff = this.indicators.macd.result.diff;
 
   // if (!this.hasBought){
   //   this.advice('short bear', candle);
