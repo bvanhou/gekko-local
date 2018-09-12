@@ -7,13 +7,9 @@ if(watch) {
     pair: [watch.currency, watch.asset]
   }
 }
-
+// console.log(config);
 module.exports = {
   settings: settings,
-  host: config.mysql.host,
-  database: config.mysql.database,
-  user: config.mysql.user,
-  password: config.mysql.password,
 
   // returns table name
   table: function (name) {

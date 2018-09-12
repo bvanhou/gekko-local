@@ -61,6 +61,7 @@ router.post('/api/import', require(ROUTE('import')));
 router.post('/api/startGekko', require(ROUTE('startGekko')));
 router.post('/api/killGekko', require(ROUTE('killGekko')));
 router.post('/api/getCandles', require(ROUTE('getCandles')));
+router.post('/api/getIndicatorResults', require(ROUTE('getIndicatorResults')));
 
 
 // incoming WS:

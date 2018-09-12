@@ -2,11 +2,13 @@ var _ = require('lodash');
 var util = require('../../core/util.js');
 var log = require('../../core/log');
 
-var handle = require('./handle');
+var Handle = require('./handle');
 
 var Reader = function(config) {
   _.bindAll(this);
-  this.db = handle;
+
+  const handle = new Handle(config);
+  this.db = handle.getConnection();
 
   this.watch = config.watch;
   this.config = config;
@@ -179,6 +181,30 @@ Reader.prototype.getBoundry = function(next) {
 
   query.on('end',function(){
     next(null, _.first(rows));
+  });
+}
+
+Reader.prototype.getIndicatorResults = function(gekko_id, from, to, next) {
+  console.log("iresults: gekko_id: "+gekko_id);
+  if (!gekko_id){
+    return next("gekko_id is required", null);
+  }
+  const queryStr = `
+  SELECT * from ${this.table('iresults')}
+    WHERE date <= ${to} AND date >= ${from} AND gekko_id = '${gekko_id}'
+    ORDER BY date ASC
+    `;
+
+  var query = this.db.query(queryStr);
+
+  var rows = [];
+  query.on('result', function (row) {
+    row.result = JSON.parse(row.result);
+    rows.push(row);
+  });
+
+  query.on('end', function () {
+    next(null, rows);
   });
 }
 

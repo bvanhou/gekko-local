@@ -4,7 +4,7 @@
       h1 Unknown Strat runner
       p Gekko doesn't know what strat runner this is...
     div(v-if='data')
-      h2.contain Strat runner id : {{ data.id }} 
+      h2.contain Strat runner id : {{ data.id }}
       .grd.contain
         .grd-row
           a(v-on:click='stopGekko', class='w100--s my1 btn--red') Stop Gekko
@@ -42,7 +42,7 @@
             .grd-row
               .grd-row-col-3-6 Name
               .grd-row-col-3-6
-                strong {{ stratName }}
+                strong {{ stratName }} {{data.strat.tradingAdvisor.candleSize}}
             | Parameters
             pre {{ stratParams }}
           .grd-row-col-3-6
@@ -50,7 +50,7 @@
             template(v-if='!report')
               p
                 em Waiting for at least one trade..
-            template(v-if='report') 
+            template(v-if='report')
               .grd-row
                 .grd-row-col-3-6 Start balance
                 .grd-row-col-3-6 {{ round(report.startBalance) }}
@@ -67,14 +67,14 @@
                 .grd-row-col-3-6 Alpha
                 .grd-row-col-3-6 {{ round(report.alpha) }} {{ data.watch.currency }}
         p(v-if='watcher')
-          em This strat runner gets data from 
+          em This strat runner gets data from
             router-link(:to='"/live-gekkos/watcher/" + watcher.id') this market watcher
           | .
       template(v-if='!isLoading')
         h3.contain Market graph
         spinner(v-if='candleFetch === "fetching"')
         template(v-if='candleFetch === "fetched"')
-          chart(:data='chartData', :height='300')
+          chart(:data='chartData', :height='300', :config = "{tradingAdvisor: data.strat.tradingAdvisor , [stratName] : data.strat.params} " )
         roundtrips(:roundtrips='data.roundtrips')
 
 </template>
@@ -105,7 +105,8 @@ export default {
   data: () => {
     return {
       candleFetch: 'idle',
-      candles: false
+      candles: false,
+      indicatorResults: {}
     }
   },
   computed: {
@@ -118,7 +119,8 @@ export default {
     chartData: function() {
       return {
         candles: this.candles,
-        trades: this.trades
+        trades: this.trades,
+        indicatorResults: this.indicatorResults
       }
     },
     trades: function() {
@@ -211,6 +213,28 @@ export default {
           return c;
         });
       })
+
+      config.gekko_id = this.data.id;
+      post('getIndicatorResults', config, (err, res) => {
+        //this.candleFetch = 'fetched';
+        // todo
+        // if(!res || res.error || !_.isArray(res))
+        //  console.log(res);
+
+        // convert back unix to string format
+        // later in techan.js we convert string format toDate.
+        const indicatorResults = {};
+        _.each(res, (indicatorResult, name) => {
+          indicatorResults[name] = indicatorResult.map(iresult => {
+            return {date : moment.unix(iresult.date).utc().format(), result: iresult.result};
+          })
+
+        });
+        console.log(indicatorResults);
+        this.indicatorResults = indicatorResults;
+      })
+
+
     },
   stopGekko: function() {
       if(this.hasLeechers) {
@@ -227,7 +251,7 @@ export default {
         console.log('stopped gekko');
       });
 
-    },    
+    },
   }
 }
 </script>

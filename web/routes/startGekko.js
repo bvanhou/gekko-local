@@ -62,6 +62,7 @@ module.exports = function *() {
   const logger = new Logger(logType);
 
   console.log('Gekko', id, 'started');
+  config.gekko_id = id; // pass id over config to backend
 
   const child = pipelineRunner(mode, config, (err, event) => {
 
@@ -171,12 +172,12 @@ module.exports = function *() {
   }
 
    gekkoManager.add(gekko);
-  
+
   broadcast({
     type: 'new_gekko',
     gekko
   });
-  
+
   child.id = gekko.id;
   gekkoProcessManager.add(child);
 

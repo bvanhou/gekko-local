@@ -136,7 +136,7 @@ method.check = function(candle) {
 // we can make hier a stoploss?
 method.candleOneMin = function(candle) {
   const isAllowedToCheck = this.requiredHistory <= this.age;
-  if (!isAllowedToCheck){
+  if (!isAllowedToCheck || !this.currentValue){
     return;
   }
 

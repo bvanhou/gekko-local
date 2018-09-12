@@ -9,12 +9,12 @@ var myUtil = require('./util');
 
 module.exports = done => {
   let markets = [];
-
+  console.log(config)
   var scanClient = mysql.createConnection({
-    host: myUtil.host,
-    user: myUtil.user,
-    password: myUtil.password,
-    database: myUtil.database
+    host: config.mysql.host,
+    database: config.mysql.database,
+    user: config.mysql.user,
+    password: config.mysql.password,
   });
 
   scanClient.connect( (err) => {
@@ -22,19 +22,19 @@ module.exports = done => {
       util.die("Error connecting to database: ", err);
     }
 
-    var sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + myUtil.database + "'";
-  
+    var sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + config.mysql.database + "'";
+
     var query = scanClient.query(sql, function(err, result) {
       if(err) {
         util.die("DB error while scanning tables: " + err);
       }
-  
+
       async.each(result, (table, next) => {
-        
+
         let parts = table.table_name.split('_');
         let exchangeName = parts.shift();
         let first = parts.shift();
-  
+
         if(first === 'candles') {
           markets.push({
             exchange: exchangeName,

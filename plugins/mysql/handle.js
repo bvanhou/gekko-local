@@ -2,50 +2,46 @@ var _ = require('lodash');
 var mysql = require('mysql');
 
 var util = require('../../core/util.js');
-var config = util.getConfig();
 var dirs = util.dirs();
-
 var log = require(util.dirs().core + 'log');
-var myUtil = require('./util');
 
-var adapter = config.mysql;
 
-// verify the correct dependencies are installed
-var pluginHelper = require(dirs.core + 'pluginUtil');
-var pluginMock = {
-  slug: 'mysql adapter',
-  dependencies: config.mysql.dependencies
-};
+var Handle = function(config) {
 
-var cannotLoad = pluginHelper.cannotLoad(pluginMock);
-if(cannotLoad){
-  util.die(cannotLoad);
+  this.config = config;
+
+  // verify the correct dependencies are installed
+  var pluginHelper = require(dirs.core + 'pluginUtil');
+  var pluginMock = {
+    slug: 'mysql adapter',
+    dependencies: config.mysql.dependencies
+  };
+
+  var cannotLoad = pluginHelper.cannotLoad(pluginMock);
+  if(cannotLoad){
+    util.die(cannotLoad);
+  }
 }
 
-var plugins = require(util.dirs().gekko + 'plugins');
+Handle.prototype.getConnection = function () {
+  const config = this.config;
 
-var version = adapter.version;
+  var database = mysql.createConnection({
+    host: config.mysql.host,
+    user: config.mysql.user,
+    password: config.mysql.password,
+    database: config.mysql.database,
+  });
 
-var dbHost = myUtil.host;
-var dbName = myUtil.database;
-var dbUser = myUtil.user;
-var dbPass = myUtil.password;
+  // Check if we could connect to the db
+  database.connect(function(err) {
+    if(err) {
+      util.die(err);
+    }
+    log.debug("Verified MySQL setup: connection possible");
+  });
 
-var database = mysql.createConnection({
-  host: dbHost,
-  user: dbUser,
-  password: dbPass,
-  database: dbName
-});
+  return database;
+}
 
-var mode = util.gekkoMode();
-
-// Check if we could connect to the db
-database.connect(function(err) {
-  if(err) {
-    util.die(err);
-  }
-  log.debug("Verified MySQL setup: connection possible");
-});
-
-module.exports = database;
+module.exports = Handle;
