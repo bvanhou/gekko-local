@@ -31,7 +31,7 @@ method.init = function() {
   this.requiredHistory = this.tradingAdvisor.historySize;
 
   // define the indicators we need
-  this.addIndicator('macd', 'MACD', this.settings);
+  this.addIndicator('macd', 'MACD', this.settings.macd.parameters);
 
   this.hasBought = false;
 }
@@ -51,12 +51,14 @@ method.log = function() {
   var diff = macd.diff;
   var signal = macd.signal;
 
+/*
   log.debug('calculated MACD properties for candle: '+this.candle.asset);
   log.debug('\t', 'short:', macd.short.result.toFixed(digits));
   log.debug('\t', 'long:', macd.long.result.toFixed(digits));
   log.debug('\t', 'macd:', diff.toFixed(digits));
   log.debug('\t', 'signal:', signal.toFixed(digits));
   log.debug('\t', 'macdiff:', macd.macd.toFixed(digits));
+*/
 }
 
 method.check = function(candle) {
@@ -70,7 +72,7 @@ method.check = function(candle) {
   //   this.hasBought = false;
   // }
 
-  if(macddiff > this.settings.thresholds.up) {
+  if(macddiff > this.settings.macd.thresholds.up) {
 
     // new trend detected
     if(this.trend.direction !== 'up')
@@ -86,7 +88,7 @@ method.check = function(candle) {
 
     log.debug('In uptrend since', this.trend.duration, 'candle(s)');
 
-    if(this.trend.duration >= this.settings.thresholds.persistence)
+    if(this.trend.duration >= this.settings.macd.thresholds.persistence)
       this.trend.persisted = true;
 
     if(this.trend.persisted && !this.trend.adviced) {
@@ -95,7 +97,7 @@ method.check = function(candle) {
     } else
       this.advice();
 
-  } else if(macddiff < this.settings.thresholds.down) {
+  } else if(macddiff < this.settings.macd.thresholds.down) {
 
     // new trend detected
     if(this.trend.direction !== 'down')
@@ -111,7 +113,7 @@ method.check = function(candle) {
 
     log.debug('In downtrend since', this.trend.duration, 'candle(s)');
 
-    if(this.trend.duration >= this.settings.thresholds.persistence)
+    if(this.trend.duration >= this.settings.macd.thresholds.persistence)
       this.trend.persisted = true;
 
     if(this.trend.persisted && !this.trend.adviced) {

@@ -23,6 +23,12 @@
         label(for='historySize') Warmup period (in {{ rawCandleSize }} {{ singularCandleSizeUnit }} candles):
         input(v-model='historySize')
         em.label-like (will use {{ humanizeDuration(candleSize * historySize * 1000 * 60) }} of data as history)
+      div
+        .grd-row
+          .grd-row-col-4-6
+            span.label-like adjust start time to begin at 00:00
+          .grd-row-col-1-6
+            input(v-model='adjustStartTime', type="checkbox")
     .grd-row-col-3-6.px1
       div
         h3 Parameters
@@ -43,6 +49,8 @@ export default {
 
       candleSizeUnit: 'hours',
       rawCandleSize: 1,
+
+      adjustStartTime: false,
 
       strategy: 'MACD',
       historySize: 10,
@@ -77,6 +85,7 @@ export default {
     },
     candleSize: function() { this.emitConfig() },
     historySize: function() { this.emitConfig() },
+    adjustStartTime: function() { this.emitConfig() },
     rawStratParams: function() { this.emitConfig() }
   },
   computed: {
@@ -98,7 +107,8 @@ export default {
           enabled: true,
           method: this.strategy,
           candleSize: +this.candleSize,
-          historySize: +this.historySize
+          historySize: +this.historySize,
+          adjustStartTime: this.adjustStartTime,
         }
       }
 

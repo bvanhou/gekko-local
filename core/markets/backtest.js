@@ -16,8 +16,8 @@ var Market = function(config) {
   const Reader = require(dirs.gekko + adapter.path + '/reader');
   const daterange = config.backtest.daterange;
 
-  this.to = moment.utc(daterange.to, "YYYY-MM-DD"); //warnig deprecated fix
-  this.from = moment.utc(daterange.from, "YYYY-MM-DD");
+  this.to = moment(daterange.to, "YYYY-MM-DD"); //warnig deprecated fix
+  this.from = moment(daterange.from, "YYYY-MM-DD");
 
   if(this.to <= this.from)
     util.die('This daterange does not make sense.')

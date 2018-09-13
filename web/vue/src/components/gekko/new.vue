@@ -52,19 +52,26 @@ export default {
         return;
 
       if(!this.requiredHistoricalData)
-        startAt = moment().utc().startOf('minute').format();
+        startAt = moment().startOf('minute').format();
       else {
+        let nowTs = moment().startOf('minute');
         // TODO: figure out whether we can stitch data
         // without looking at the existing watcher
-        const optimal = moment().utc().startOf('minute')
-          .subtract(this.requiredHistoricalData, 'minutes')
-          .unix();
+        let optimal = nowTs
+          .subtract(this.requiredHistoricalData, 'minutes');
 
-        const available = moment
-          .utc(this.existingMarketWatcher.firstCandle.start)
-          .unix();
 
-        startAt = moment.unix(optimal).utc().format();
+        let available = moment
+          (this.existingMarketWatcher.firstCandle.start);
+
+        if (this.config.tradingAdvisor.adjustStartTime){
+          //start reading from db always to full day (00:00 minutes).
+          //so we can compare backtest results with realtime results.
+          optimal = optimal.hour(0);
+          optimal = optimal.minute(0);
+        }
+
+        startAt = optimal.format();
       }
 
       const gekkoConfig = Vue.util.extend({

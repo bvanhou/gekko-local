@@ -32,10 +32,20 @@ var Market = function(config) {
     util.die(error, true);
 
   let fromTs;
-  if(config.market.from)
-    fromTs = moment.utc(config.market.from).unix();
-  else
-    fromTs = moment().startOf('minute').unix();
+  if(config.market.from){
+    fromTs = moment(config.market.from).unix();
+  }
+  else{
+    let nowTs = moment().startOf('minute');
+    //start reading from db always to full hour (00:00 minutes).
+    //so we can compare backtest results with realtime results.
+    if (this.config.tradingAdvisor.adjustStartTime){
+      nowTs = nowTs.hour(0);
+      nowTs = nowTs.minute(0);
+    }
+
+    fromTs = nowTs.unix();
+  }
 
 
   Readable.call(this, {objectMode: true});
