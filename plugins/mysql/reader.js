@@ -1,6 +1,8 @@
 var _ = require('lodash');
 var util = require('../../core/util.js');
 var log = require('../../core/log');
+var mysqlUtil = require('./util');
+var resilient = require('./resilient');
 
 var Handle = require('./handle');
 
@@ -9,15 +11,10 @@ var Reader = function(config) {
 
   const handle = new Handle(config);
   this.db = handle.getConnection();
+  this.dbpromise = this.db.promise();
 
   this.watch = config.watch;
   this.config = config;
-}
-
-
-Reader.prototype.table = function(name){
-  var name = this.watch.exchange + '_' + name;
-  return [name, this.watch.currency, this.watch.asset].join('_');
 }
 
 // returns the furtherst point (up to `from`) in time we have valid data from
@@ -28,7 +25,7 @@ Reader.prototype.mostRecentWindow = function(from, to, next) {
   var maxAmount = to - from + 1;
 
   var query = this.db.query(`
-  SELECT start from ${this.table('candles')}
+  SELECT start from ${mysqlUtil.table('candles',this.watch)}
   WHERE start <= ${to} AND start >= ${from}
   ORDER BY start DESC
   `, function (err, result) {
@@ -97,7 +94,7 @@ Reader.prototype.tableExists = function (name, next) {
     SELECT table_name
     FROM information_schema.tables
     WHERE table_schema='${this.config.mysql.database}'
-      AND table_name='${this.table(name)}';
+      AND table_name='${mysqlUtil.table(name, this.watch)}';
   `, function(err, result) {
     if (err) {
       return util.die('DB error at `tableExists`');
@@ -107,33 +104,30 @@ Reader.prototype.tableExists = function (name, next) {
   });
 }
 
-Reader.prototype.get = function(from, to, what, next) {
+Reader.prototype.get = async function(from, to, what, next) {
   if(what === 'full'){
     what = '*';
   }
 
   const queryStr = `
-  SELECT ${what} from ${this.table('candles')}
+  SELECT ${what} from ${mysqlUtil.table('candles',this.watch)}
   WHERE start <= ${to} AND start >= ${from}
   ORDER BY start ASC
   `;
 
-  // console.log(queryStr);
-  var query = this.db.query(queryStr);
-
-  var rows = [];
-  query.on('result', function(row) {
-    rows.push(row);
-  });
-
-  query.on('end',function(){
+  try{
+    const [rows, fields] = await resilient.callFunctionWithIntervall(60, () => this.dbpromise.query(queryStr).catch((err) => {}), 5000);
     next(null, rows);
-  });
+  }catch(err){
+    // we have permanent error
+    log.error(err);
+    next(err);
+  }
 }
 
 Reader.prototype.count = function(from, to, next) {
   var query = this.db.query(`
-  SELECT COUNT(*) as count from ${this.table('candles')}
+  SELECT COUNT(*) as count from ${mysqlUtil.table('candles',this.watch)}
   WHERE start <= ${to} AND start >= ${from}
   `);
   var rows = [];
@@ -148,7 +142,7 @@ Reader.prototype.count = function(from, to, next) {
 
 Reader.prototype.countTotal = function(next) {
   var query = this.db.query(`
-  SELECT COUNT(*) as count from ${this.table('candles')}
+  SELECT COUNT(*) as count from ${mysqlUtil.table('candles',this.watch)}
   `);
   var rows = [];
   query.on('result', function(row) {
@@ -164,12 +158,12 @@ Reader.prototype.getBoundry = function(next) {
   var query = this.db.query(`
   SELECT (
     SELECT start
-    FROM ${this.table('candles')}
+    FROM ${mysqlUtil.table('candles',this.watch)}
     ORDER BY start LIMIT 1
   ) as first,
   (
     SELECT start
-    FROM ${this.table('candles')}
+    FROM ${mysqlUtil.table('candles',this.watch)}
     ORDER BY start DESC
     LIMIT 1
   ) as last
@@ -190,7 +184,7 @@ Reader.prototype.getIndicatorResults = function(gekko_id, from, to, next) {
     return next("gekko_id is required", null);
   }
   const queryStr = `
-  SELECT * from ${this.table('iresults')}
+  SELECT * from ${this.table('iresults', this.watch)}
     WHERE date <= ${to} AND date >= ${from} AND gekko_id = '${gekko_id}'
     ORDER BY date ASC
     `;
@@ -209,7 +203,7 @@ Reader.prototype.getIndicatorResults = function(gekko_id, from, to, next) {
 }
 
 Reader.prototype.close = function() {
-   this.db.end();
+   // this.db.end();
 }
 
 module.exports = Reader;

@@ -1,17 +1,16 @@
 var _ = require('lodash');
-var mysql = require('mysql');
+var mysql = require('mysql2');
 
 var util = require('../../core/util.js');
-var dirs = util.dirs();
-var log = require(util.dirs().core + 'log');
+var log = require('../../core/log');
 
-
+let pool = undefined;
 var Handle = function(config) {
 
   this.config = config;
 
   // verify the correct dependencies are installed
-  var pluginHelper = require(dirs.core + 'pluginUtil');
+  var pluginHelper = require('../../core/pluginUtil');
   var pluginMock = {
     slug: 'mysql adapter',
     dependencies: config.mysql.dependencies
@@ -26,22 +25,30 @@ var Handle = function(config) {
 Handle.prototype.getConnection = function () {
   const config = this.config;
 
-  var database = mysql.createConnection({
-    host: config.mysql.host,
-    user: config.mysql.user,
-    password: config.mysql.password,
-    database: config.mysql.database,
-  });
+  if (pool){
+    return pool;
+  }else{
+    pool = mysql.createPool({
+      connectionLimit : 10,
+      acquireTimeout : 30000,
+      host: config.mysql.host,
+      user: config.mysql.user,
+      password: config.mysql.password,
+      database: config.mysql.database,
+    });
+  }
 
   // Check if we could connect to the db
-  database.connect(function(err) {
-    if(err) {
-      util.die(err);
-    }
+  pool.promise().getConnection().then((connection) =>{
     log.debug("Verified MySQL setup: connection possible");
+    connection.release();
+  }).catch(util.die);
+
+  pool.on('error', function(err) {
+    log.error(err);
   });
 
-  return database;
+  return pool;
 }
 
 module.exports = Handle;

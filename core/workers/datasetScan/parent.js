@@ -13,9 +13,10 @@ module.exports = function(config, done) {
   util.setConfig(config);
 
   var adapter = config[config.adapter];
-  var scan = require(dirs.gekko + adapter.path + '/scanner');
+  var Scanner = require(dirs.gekko + adapter.path + '/scanner');
+  const scanner = new Scanner(config);
 
-  scan((err, markets) => {
+  scanner.scan((err, markets) => {
 
     if(err)
       return done(err);

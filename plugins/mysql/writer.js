@@ -4,6 +4,7 @@ var _ = require('lodash');
 var Handle = require('./handle');
 var log = require('../../core/log');
 var moment = require('moment');
+var mysqlUtil = require('./util');
 
 var Store = function(done, pluginMeta) {
   _.bindAll(this);
@@ -11,7 +12,6 @@ var Store = function(done, pluginMeta) {
 
   this.watch = pluginMeta.configGlobal.watch;
   this.config = pluginMeta.configGlobal;
-
 
 
   const handle = new Handle(this.config);
@@ -29,14 +29,10 @@ var Store = function(done, pluginMeta) {
   this.tickrate = TICKRATE;
 };
 
-Store.prototype.table = function(name){
-  return [this.watch.exchange, name, this.watch.currency, this.watch.asset].join('_');
-};
-
 Store.prototype.upsertTables = function() {
   var createQueries = [
     `CREATE TABLE IF NOT EXISTS
-    ${this.table('candles')} (
+    ${mysqlUtil.table('candles',this.watch)} (
       id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
       start INT UNSIGNED UNIQUE,
       open DOUBLE NOT NULL,
@@ -48,7 +44,7 @@ Store.prototype.upsertTables = function() {
       trades INT UNSIGNED NOT NULL
     );`,
     `CREATE TABLE IF NOT EXISTS
-    ${this.table('iresults')} (
+    ${mysqlUtil.table('iresults',this.watch)} (
       id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
       gekko_id VARCHAR(30) NOT NULL,
       name CHAR(20) NOT NULL,
@@ -77,7 +73,7 @@ Store.prototype.writeCandles = function() {
 
   synchronize = true;
 
-  var q = `INSERT INTO ${this.table('candles')} (start, open, high,low, close, vwp, volume, trades) VALUES ? ON DUPLICATE KEY UPDATE start = start`;
+  var q = `INSERT INTO ${mysqlUtil.table('candles',this.watch)} (start, open, high,low, close, vwp, volume, trades) VALUES ? ON DUPLICATE KEY UPDATE start = start`;
   let candleArrays = this.cache.map((c) => [c.start.unix(), c.open, c.high, c.low, c.close, c.vwp, c.volume, c.trades]);
 
   log.debug('start writing: ' + this.cache.length);
@@ -115,7 +111,7 @@ Store.prototype.finalize = function(done) {
   }
 
   this.writeCandles();
-  this.db = null;
+  this.db = null;this
   done();
 }
 
@@ -126,7 +122,7 @@ Store.prototype.writeIndicatorResult = function(gekko_id, indicatorResult) {
 
   const date = moment.utc(indicatorResult.date).unix();
   // console.log(date.format('YYYY-MM-DD HH:mm'))
-  var q = `INSERT INTO ${this.table('iresults')} (gekko_id, name, date, result) VALUES ( '${gekko_id}', '${indicatorResult.name}', ${date}, '${JSON.stringify(indicatorResult.result)}')
+  var q = `INSERT INTO ${mysqlUtil.table('iresults',this.watch)} (gekko_id, name, date, result) VALUES ( '${gekko_id}', '${indicatorResult.name}', ${date}, '${JSON.stringify(indicatorResult.result)}')
      ON DUPLICATE KEY UPDATE result = '${JSON.stringify(indicatorResult.result)}'
   `; //TODO duplicate key?
 

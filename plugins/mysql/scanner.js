@@ -1,30 +1,19 @@
 const _ = require('lodash');
 const async = require('async');
-var mysql = require('mysql');
+var Handle = require('./handle');
 
-const util = require('../../core/util.js');
-const config = util.getConfig();
-const dirs = util.dirs();
-var myUtil = require('./util');
+var Scanner = function(config){
+  this.config = config;
+  const handle = new Handle(this.config);
+  this.db = handle.getConnection();
+}
 
-module.exports = done => {
+Scanner.prototype.scan = function (done) {
   let markets = [];
-  console.log(config)
-  var scanClient = mysql.createConnection({
-    host: config.mysql.host,
-    database: config.mysql.database,
-    user: config.mysql.user,
-    password: config.mysql.password,
-  });
 
-  scanClient.connect( (err) => {
-    if (err) {
-      util.die("Error connecting to database: ", err);
-    }
+  var sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + this.config.mysql.database + "'";
 
-    var sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + config.mysql.database + "'";
-
-    var query = scanClient.query(sql, function(err, result) {
+  var query = this.db.query(sql, function(err, result) {
       if(err) {
         util.die("DB error while scanning tables: " + err);
       }
@@ -45,9 +34,9 @@ module.exports = done => {
         next();
       },
       err => {
-        scanClient.end();
         done(err, markets);
       });
     });
-  });
 }
+
+module.exports = Scanner;

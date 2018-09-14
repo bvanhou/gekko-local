@@ -63,7 +63,7 @@ method.init = function() {
 
 // what happens on every new candle?
 method.update = function(candle) {
-  log.debug("requiredHistory:" + this.requiredHistory + " age:" +this.age);
+  // log.debug("requiredHistory:" + this.requiredHistory + " age:" +this.age);
 }
 
 // for debugging purposes: log the last calculated
