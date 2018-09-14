@@ -184,7 +184,7 @@ Reader.prototype.getIndicatorResults = function(gekko_id, from, to, next) {
     return next("gekko_id is required", null);
   }
   const queryStr = `
-  SELECT * from ${this.table('iresults', this.watch)}
+  SELECT * from ${mysqlUtil.table('iresults', this.watch)}
     WHERE date <= ${to} AND date >= ${from} AND gekko_id = '${gekko_id}'
     ORDER BY date ASC
     `;
