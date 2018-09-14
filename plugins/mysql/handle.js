@@ -30,7 +30,6 @@ Handle.prototype.getConnection = function () {
   }else{
     pool = mysql.createPool({
       connectionLimit : 10,
-      acquireTimeout : 30000,
       host: config.mysql.host,
       user: config.mysql.user,
       password: config.mysql.password,
