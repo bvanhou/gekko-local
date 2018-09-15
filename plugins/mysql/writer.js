@@ -5,6 +5,7 @@ var Handle = require('./handle');
 var log = require('../../core/log');
 var moment = require('moment');
 var mysqlUtil = require('./util');
+var resilient = require('./resilient');
 
 var Store = function(done, pluginMeta) {
   _.bindAll(this);
@@ -16,6 +17,7 @@ var Store = function(done, pluginMeta) {
 
   const handle = new Handle(this.config);
   this.db = handle.getConnection();
+  this.dbpromise = this.db.promise();
   this.upsertTables();
 
   this.cache = [];
@@ -63,7 +65,7 @@ Store.prototype.upsertTables = function() {
 }
 
 let synchronize = false; // for synchronizing if setTimeout also wants to write
-Store.prototype.writeCandles = function() {
+Store.prototype.writeCandles = async function() {
   if (synchronize)
     return;
 
@@ -73,17 +75,19 @@ Store.prototype.writeCandles = function() {
 
   synchronize = true;
 
-  var q = `INSERT INTO ${mysqlUtil.table('candles',this.watch)} (start, open, high,low, close, vwp, volume, trades) VALUES ? ON DUPLICATE KEY UPDATE start = start`;
+  var queryStr = `INSERT INTO ${mysqlUtil.table('candles',this.watch)} (start, open, high,low, close, vwp, volume, trades) VALUES ? ON DUPLICATE KEY UPDATE start = start`;
   let candleArrays = this.cache.map((c) => [c.start.unix(), c.open, c.high, c.low, c.close, c.vwp, c.volume, c.trades]);
 
   log.debug('start writing: ' + this.cache.length);
-  this.db.query(q, [candleArrays],  err => {
-    if (err) log.debug("Error while inserting candle: " + err);
-
+  try {
+    const [rows, fields] = await resilient.callFunctionWithIntervall(60, ()=> this.dbpromise.query(queryStr, [candleArrays]).catch((err) => {}), 5000);
     this.cache = [];
-    synchronize = false;
+
+    synchronize = false; //TODO remove
     log.debug('end writing: ' + this.cache.length);
-  });
+  }catch(err){
+    log.error("Error while inserting candle: " + err);
+  }
 };
 
 Store.prototype.processCandle = function(candle, done) {
@@ -116,19 +120,21 @@ Store.prototype.finalize = function(done) {
 }
 
 
-Store.prototype.writeIndicatorResult = function(gekko_id, indicatorResult) {
+Store.prototype.writeIndicatorResult = async function(gekko_id, indicatorResult) {
   if (!gekko_id)
     return;
 
   const date = moment.utc(indicatorResult.date).unix();
   // console.log(date.format('YYYY-MM-DD HH:mm'))
-  var q = `INSERT INTO ${mysqlUtil.table('iresults',this.watch)} (gekko_id, name, date, result) VALUES ( '${gekko_id}', '${indicatorResult.name}', ${date}, '${JSON.stringify(indicatorResult.result)}')
+  var queryStr = `INSERT INTO ${mysqlUtil.table('iresults',this.watch)} (gekko_id, name, date, result) VALUES ( '${gekko_id}', '${indicatorResult.name}', ${date}, '${JSON.stringify(indicatorResult.result)}')
      ON DUPLICATE KEY UPDATE result = '${JSON.stringify(indicatorResult.result)}'
   `; //TODO duplicate key?
 
-  this.db.query(q, (err, result) => {
-    if (err) log.debug("Error while inserting indicator Result: " + err);
-  });
+  try {
+    const [rows, fields] = await resilient.callFunctionWithIntervall(60, ()=> this.dbpromise.query(queryStr).catch((err) => {}), 5000);
+  }catch(err){
+    log.error("Error while inserting indicator Result: " + err);
+  }
 }
 
 module.exports = Store;
