@@ -41,9 +41,9 @@ PaperTrader.prototype.relayTrade = function(advice) {
     action = 'sell';
   else if(what === 'long')
     action = 'buy';
-  else if(what === 'short bear')
-      action = 'buy bear';
   else if(what === 'long bear')
+      action = 'buy bear';
+  else if(what === 'short bear')
       action = 'sell bear';
   else
     return;
@@ -98,9 +98,8 @@ PaperTrader.prototype.updatePosition = function(advice) {
     this.trades++;
   }
 
-  else if(what === 'short bear') { // buy asset as short-leverage
+  else if(what === 'long bear') { // buy asset as short-leverage
     this.roundTrip.entry = {
-      price: price,
       total: this.portfolio.currency,
     }
 
@@ -108,14 +107,14 @@ PaperTrader.prototype.updatePosition = function(advice) {
     this.portfolio.currency = 0;
     this.trades++;
 
-    if (this.roundTrip.exit) {
-      this.roundTrip.id++;
-      this.roundTrip.exit = false;
-    }
+    // if (this.roundTrip.exit) {
+    //   this.roundTrip.id++;
+    //   this.roundTrip.exit = false;
+    // }
 
 
   }
-  else if(what === 'long bear') { // sell asset as short-leverage
+  else if(what === 'short bear') { // sell asset as short-leverage
     this.trades++;
 
     const diffBear = this.roundTrip.entry.total- (this.portfolio.asset * price);

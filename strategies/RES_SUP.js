@@ -226,7 +226,7 @@ method.bearTrendStrat = function(candle, buyadviceProp, selladviceProp){
     && buyadviceProp.isTrend
   ){
     this.hasBoughtBear = true;
-    this.advice('short bear', candle, buyadviceProp);
+    this.advice('long bear', candle, buyadviceProp);
     this.buyingAge = 1;
     // merken sma
     this.buysma = buyadviceProp.nearSma;
@@ -243,7 +243,7 @@ method.bearTrendStrat = function(candle, buyadviceProp, selladviceProp){
 
   ){
     this.hasBoughtBear = false;
-    this.advice('long bear', candle, selladviceProp);
+    this.advice('short bear', candle, selladviceProp);
     this.buyingAge = 0;
     this.breakSma = 0;
     this.buysma = 0;
