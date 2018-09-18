@@ -15,14 +15,14 @@ function callFunctionWithIntervall(limit, func, intervall = 1000) {
        });
      } else {
        if (limit>0) {
-         return funcWithTimeout(limit, func, intervall);
+         return funcWithTimeout(limit, limit, func, intervall);
        } else {
          return new Promise.reject("empty object");
        }
      }
    }).catch((error)=> {
      if (limit>0) {
-       return funcWithTimeout(limit, func, intervall);
+       return funcWithTimeout(limit, limit, func, intervall);
      } else {
        return new Promise.reject(error);
      }
@@ -31,18 +31,18 @@ function callFunctionWithIntervall(limit, func, intervall = 1000) {
    return promiseResult;
  }
 
-function funcWithTimeout(limit, func, intervall){
+function funcWithTimeout(limit, maxlimit, func, intervall){
   const promiseToCall = func();
 
   const promise = new Promise((resolve, reject)=>{
 
   setTimeout(function() {
     promiseToCall.then((data)=>{
-      console.log("try again : "+limit);
+      console.log("try again : "+limit + " interval: "+intervall);
       if (limit <= 1 || (data && data.length>=0)) {
         resolve(data);
       } else {
-        funcWithTimeout (--limit, func, intervall).then((res)=> resolve(res)).catch((error)=>reject(error));
+        funcWithTimeout (--limit, maxlimit, func, (maxlimit-limit)*(maxlimit-limit)*1000).then((res)=> resolve(res)).catch((error)=>reject(error));
       }
     }).catch((error)=> {
       console.log("error: "+ error+ " try again : "+limit);
@@ -50,7 +50,7 @@ function funcWithTimeout(limit, func, intervall){
         console.log("funcWithTimeout:"+JSON.stringify(error));
         reject(error);
       } else {
-        funcWithTimeout (--limit, func, intervall).then((res)=> resolve(res)).catch((error)=>reject(error));
+        funcWithTimeout (--limit, maxlimit, func, (maxlimit-limit)*(maxlimit-limit)*1000).then((res)=> resolve(res)).catch((error)=>reject(error));
       }
     });
   }, intervall);
