@@ -19,6 +19,9 @@ var Market = function(config) {
   this.to = moment(daterange.to, "YYYY-MM-DD"); //warnig deprecated fix
   this.from = moment(daterange.from, "YYYY-MM-DD");
 
+  //subtract history
+  this.from = this.from.subtract((+config.tradingAdvisor.historySize)*(+config.tradingAdvisor.candleSize), "minutes");
+
   if(this.to <= this.from)
     util.die('This daterange does not make sense.')
 
